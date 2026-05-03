@@ -1,0 +1,6 @@
+{
+  "name": "Expense Log",
+  "description": "A refined personal finance dashboard for tracking income, expenses, and outstanding bills, synced with Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
