@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, ReactNode } from 'react';
-import { Transaction, Outstanding, PageView, Account } from './types';
+import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
 import { 
   Chart as ChartJS, 
@@ -368,7 +368,7 @@ export default function App() {
     const filtered = transactions.filter(r => {
       if (filterCat && r.Category !== filterCat) return false;
       if (filterSubCat && r['Sub-Category'] !== filterSubCat) return false;
-      if (filterAcc && r.Account !== filterAcc) return false;
+      if (filterAcc && r.Accounts !== filterAcc) return false;
       if (filterMonth && !r.Date.startsWith(filterMonth)) return false;
       if (search) {
         const s = search.toLowerCase();
@@ -615,7 +615,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="loading-overlay">
-        <div className="loading-title">Expense<span>Log</span></div>
+        <img src="/logo.png" alt="Expense Log Pro" className="w-24 h-24 object-contain mb-4 animate-pulse mx-auto" />
         <div className="loading-bar-wrap"><div className="loading-bar"></div></div>
         <div className="loading-sub">Connecting to Google Sheets...</div>
       </div>
@@ -633,7 +633,7 @@ export default function App() {
           >
             <Menu size={24} />
           </button>
-          <h1 className="text-[#ffffff] font-extrabold text-lg tracking-tight">Expense<span className="text-[#c84b2f]">Log</span></h1>
+          <img src="/logo.png" alt="Expense Log Pro" className="h-10 w-auto object-contain drop-shadow-md" />
         </div>
         <div className="flex items-center">
           {/* Live status moved to sidebar */}
@@ -678,11 +678,12 @@ export default function App() {
 
       {/* Sidebar */}
       <aside className={cn("sidebar", sidebarCollapsed && "collapsed", mobileSidebarOpen && "open")}>
-        <div className="md:flex hidden px-6 py-8 items-center justify-center border-b border-white/5">
-          <h1 className={cn("font-extrabold transition-all duration-300", sidebarCollapsed ? "text-sm" : "text-xl")}>
-            <span className="text-[#ffffff]">{sidebarCollapsed ? "E" : "Expense"}</span>
-            <span className="text-[#c84b2f]">{sidebarCollapsed ? "L" : "Log"}</span>
-          </h1>
+        <div className="md:flex hidden px-6 py-6 items-center justify-center border-b border-white/5">
+          <img 
+            src="/logo.png" 
+            alt="Expense Log Pro" 
+            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-8 h-8" : "w-24 h-auto")} 
+          />
         </div>
         <nav className="nav-container">
           <NavItem 
@@ -755,7 +756,7 @@ export default function App() {
                   Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
                   status: 'Pending',
-                  name: '', bank: '', type: 'Bank', balance: ''
+                  name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                 });
                 setShowModal('transaction'); 
               }}
@@ -814,7 +815,7 @@ export default function App() {
                       Accounts: ACCOUNTS_LIST[0],
                       state: 'Payable',
                       status: 'Pending',
-                      name: '', bank: '', type: 'Bank', balance: ''
+                      name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('transaction'); 
                   }}
@@ -969,7 +970,7 @@ export default function App() {
                             desc: r.Desc || '',
                             state: r.State || 'Payable',
                             status: r.Status || 'Processed',
-                            name: '', bank: '', type: 'Bank', balance: '', standardBalance: '', month: ''
+                            name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: ''
                           });
                           setShowModal('transaction');
                         }
@@ -1030,7 +1031,7 @@ export default function App() {
                       Accounts: 'Bank of Baroda',
                       state: filterState as any,
                       status: 'Pending',
-                      name: '', bank: '', type: 'Bank', balance: ''
+                      name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('outstanding');
                   }}
@@ -1564,7 +1565,7 @@ export default function App() {
                   Accounts: 'Bank of Baroda',
                   state: filterState as any,
                   status: 'Pending',
-                  name: '', bank: '', type: 'Bank', balance: ''
+                  name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                 });
                 setShowModal('outstanding');
             }}
