@@ -141,7 +141,7 @@ export default function App() {
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
-    amount: '0',
+    amount: '',
     category: 'Expenses',
     subCategory: '',
     desc: '',
@@ -180,6 +180,10 @@ export default function App() {
   const [outSearch, setOutSearch] = useState('');
   const [outFilterState, setOutFilterState] = useState('');
   const [outFilterMonth, setOutFilterMonth] = useState('');
+  const [outFilterCat, setOutFilterCat] = useState('');
+  const [outFilterSubCat, setOutFilterSubCat] = useState('');
+  
+  const [accFilterMonth, setAccFilterMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   
   const [filterState, setFilterState] = useState('Payable');
 
@@ -387,6 +391,8 @@ export default function App() {
     const filtered = outstanding.filter(r => {
       if (outFilterState && r.State !== outFilterState) return false;
       if (outFilterMonth && !r.Date.startsWith(outFilterMonth)) return false;
+      if (outFilterCat && r.Category !== outFilterCat) return false;
+      if (outFilterSubCat && r['Sub-Category'] !== outFilterSubCat) return false;
       if (outSearch) {
         const s = outSearch.toLowerCase();
         const anyR = r as any;
@@ -748,7 +754,7 @@ export default function App() {
                 setEditId(null); 
                 setFormData({
                   date: lastEnteredTxDate,
-                  amount: '0',
+                  amount: '',
                   category: 'Expenses',
                   subCategory: CATEGORY_MAP_T['Expenses'][0],
                   desc: '',
@@ -807,7 +813,7 @@ export default function App() {
                     setEditId(null); 
                     setFormData({
                       date: lastEnteredTxDate,
-                      amount: '0',
+                      amount: '',
                       category: 'Expenses',
                       subCategory: CATEGORY_MAP_T['Expenses'][0],
                       desc: '',
@@ -825,16 +831,18 @@ export default function App() {
                   <span className="hidden md:inline ml-1">Add Entry</span>
                 </button>
 
-                <button
-                  className={cn("flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0", isEditingTransactions ? "bg-accent/10 text-accent border border-accent/20" : "bg-[#c84b2f] hover:brightness-110 text-white border-0")}
-                  onClick={() => {
-                    setIsEditingTransactions(!isEditingTransactions);
-                    if (!isEditingTransactions) setSelectedTransactions(new Set());
-                  }}
-                  title={isEditingTransactions ? "Done Editing" : "Edit Transactions"}
-                >
-                  {isEditingTransactions ? <><span className="hidden md:inline font-semibold">Done</span><span className="md:hidden"><X size={16} /></span></> : <><Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span></>}
-                </button>
+                {!isEditingTransactions && (
+                  <button
+                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                    onClick={() => {
+                      setIsEditingTransactions(true);
+                      setSelectedTransactions(new Set());
+                    }}
+                    title="Edit Transactions"
+                  >
+                    <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span>
+                  </button>
+                )}
 
                 <button 
                   className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9", (showFilters || showSearch) && "bg-accent/10 text-accent")} 
@@ -1023,7 +1031,7 @@ export default function App() {
                     setEditId(null);
                     setFormData({
                       date: lastEnteredTxDate,
-                      amount: '0',
+                      amount: '',
                       category: 'Expenses',
                       subCategory: 'Payment',
                       desc: '',
@@ -1041,16 +1049,18 @@ export default function App() {
                   <span className="hidden md:inline ml-1">Add Entry</span>
                 </button>
 
-                <button
-                  className={cn("flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0", isEditingOutstanding ? "bg-accent/10 text-accent border border-accent/20" : "bg-[#c84b2f] hover:brightness-110 text-white border-0")}
-                  onClick={() => {
-                    setIsEditingOutstanding(!isEditingOutstanding);
-                    if (!isEditingOutstanding) setSelectedOutstanding(new Set());
-                  }}
-                  title={isEditingOutstanding ? "Done Editing" : "Edit Outstanding"}
-                >
-                  {isEditingOutstanding ? <><span className="hidden md:inline font-semibold">Done</span><span className="md:hidden"><X size={16} /></span></> : <><Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span></>}
-                </button>
+                {!isEditingOutstanding && (
+                  <button
+                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                    onClick={() => {
+                      setIsEditingOutstanding(true);
+                      setSelectedOutstanding(new Set());
+                    }}
+                    title="Edit Outstanding"
+                  >
+                    <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span>
+                  </button>
+                )}
 
                 <button 
                   className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9", (showOutFilters || showOutSearch) && "bg-accent/10 text-accent")} 
@@ -1120,10 +1130,18 @@ export default function App() {
                   </div>
                 )}
                 {showOutFilters && (
-                  <div id="outstanding-filters" className="flex gap-2 w-full animate-in fade-in slide-in-from-top-1">
-                    <select className="filter-select flex-1 h-9" value={outFilterState} onChange={e => setOutFilterState(e.target.value)}>
+                  <div id="outstanding-filters" className="flex flex-wrap gap-2 w-full animate-in fade-in slide-in-from-top-1">
+                    <select className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterState} onChange={e => setOutFilterState(e.target.value)}>
                       <option value="">All States</option>
                       <option>Payable</option><option>Receivable</option>
+                    </select>
+                    <select className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterCat} onChange={e => { setOutFilterCat(e.target.value); setOutFilterSubCat(''); }}>
+                      <option value="">All Categories</option>
+                      {Object.keys(CATEGORY_MAP_O).map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <select className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterSubCat} onChange={e => setOutFilterSubCat(e.target.value)}>
+                      <option value="">All Sub-Categories</option>
+                      {outFilterCat && CATEGORY_MAP_O[outFilterCat] ? CATEGORY_MAP_O[outFilterCat].map(sc => <option key={sc} value={sc}>{sc}</option>) : null}
                     </select>
                     <select id="out-filter-timeline" className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterMonth} onChange={e => setOutFilterMonth(e.target.value)}>
                       <option value="">Timeline</option>
@@ -1131,10 +1149,10 @@ export default function App() {
                         <option key={m.value} value={m.value}>{m.label}</option>
                       ))}
                     </select>
-                    {(outFilterState || outFilterMonth) && (
+                    {(outFilterState || outFilterMonth || outFilterCat || outFilterSubCat) && (
                       <button 
                         className="btn btn-ghost btn-sm min-w-[36px] h-9 flex items-center justify-center text-accent bg-accent/5" 
-                        onClick={() => { setOutFilterState(''); setOutFilterMonth(''); }}
+                        onClick={() => { setOutFilterState(''); setOutFilterMonth(''); setOutFilterCat(''); setOutFilterSubCat(''); }}
                         title="Clear Filters"
                       >
                         <X size={14} />
@@ -1276,7 +1294,12 @@ export default function App() {
                 <div className="page-title">Accounts<span>.</span></div>
                 <div className="page-sub">Bank accounts & credit cards</div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <select className="filter-select h-9 min-w-[120px]" value={accFilterMonth} onChange={e => setAccFilterMonth(e.target.value)}>
+                  {past10Months.map(m => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
               <button 
                 className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3 h-9" 
                 onClick={() => { 
@@ -1284,7 +1307,7 @@ export default function App() {
                   setFormData({
                     ...formData,
                     date: new Date().toISOString().slice(0, 10),
-                    amount: '0',
+                    amount: '',
                     name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
                   });
                   setShowModal('account'); 
@@ -1294,13 +1317,15 @@ export default function App() {
                 <Plus size={16} />
                 <span className="hidden md:inline ml-1">Add Account</span>
               </button>
-              <button
-                className={cn("flex btn items-center justify-center w-9 h-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0", isEditingAccounts ? "bg-accent/10 text-accent border border-accent/20" : "bg-[#c84b2f] hover:brightness-110 text-white border-0")}
-                onClick={() => setIsEditingAccounts(!isEditingAccounts)}
-                title={isEditingAccounts ? "Done Editing" : "Edit Accounts"}
-              >
-                {isEditingAccounts ? <><span className="hidden md:inline font-semibold">Done</span><span className="md:hidden"><X size={16} /></span></> : <><Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span></>}
-              </button>
+              {!isEditingAccounts && (
+                <button
+                  className="flex btn items-center justify-center w-9 h-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                  onClick={() => setIsEditingAccounts(true)}
+                  title="Edit Accounts"
+                >
+                  <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1359,7 +1384,15 @@ export default function App() {
                           </div>
                         </td>
                         <td className="py-4 px-4 text-right font-mono font-bold text-sm text-accent2">
-                          {acc ? fmt(acc.balance) : '₹0'}
+                          {(() => {
+                            const accTx = transactions.filter(r => r.Accounts === name && r.Date.startsWith(accFilterMonth));
+                            let currentMonthBalance = 0;
+                            accTx.forEach(r => {
+                              if (r.Category === 'Income') currentMonthBalance += r.Amount;
+                              else currentMonthBalance -= r.Amount;
+                            });
+                            return fmt(currentMonthBalance);
+                          })()}
                         </td>
                         <td className="py-4 px-4 text-right font-mono font-bold text-sm text-text">
                           {acc && acc.standardBalance ? fmt(acc.standardBalance) : '₹0'}
@@ -1401,11 +1434,11 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="form-group">
                     <label className="form-label">Current Balance (₹)</label>
-                    <input className="form-input" type="number" placeholder="0" value={formData.balance} onChange={e => setFormData({ ...formData, balance: e.target.value })} />
+                    <input className="form-input" type="number" placeholder="" value={formData.balance} onChange={e => setFormData({ ...formData, balance: e.target.value })} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Standard Balance (₹)</label>
-                    <input className="form-input" type="number" placeholder="0" value={formData.standardBalance} onChange={e => setFormData({ ...formData, standardBalance: e.target.value })} />
+                    <input className="form-input" type="number" placeholder="" value={formData.standardBalance} onChange={e => setFormData({ ...formData, standardBalance: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -1444,51 +1477,77 @@ export default function App() {
               </div>
             ) : showModal === 'outstanding' || showModal === 'transaction' ? (
               <div className="space-y-3">
-                <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-3">
-                  <div className="form-group">
-                    <label className="form-label">Date</label>
-                    <input className="form-input" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Amount (₹)</label>
-                    <input className="form-input" type="number" placeholder="0" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
-                  </div>
-                  {showModal === 'outstanding' && (
-                   <div className="form-group">
-                    <label className="form-label">State</label>
-                    <select className="form-input" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value as any })}>
-                      <option>Payable</option>
-                      <option>Receivable</option>
-                    </select>
-                  </div>
-                  )}
-                  <div className="form-group">
-                    <label className="form-label">Category</label>
-                    <select 
-                      className="form-input" 
-                      value={formData.category} 
-                      onChange={e => setFormData({ ...formData, category: e.target.value as any })}
-                    >
-                      {Object.keys(showModal === 'transaction' ? CATEGORY_MAP_T : CATEGORY_MAP_O).map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Sub-Category</label>
-                    <select 
-                      className="form-input" 
-                      value={formData.subCategory} 
-                      onChange={e => setFormData({ ...formData, subCategory: e.target.value })}
-                    >
-                      {(showModal === 'transaction' ? CATEGORY_MAP_T : CATEGORY_MAP_O)[formData.category]?.map(sc => (
-                        <option key={sc}>{sc}</option>
-                      )) || <option value="">None</option>}
-                    </select>
-                  </div>
-                  <div className="form-group md:col-span-2 lg:col-span-2">
-                    <label className="form-label">Desc</label>
-                    <input className="form-input" type="text" placeholder="e.g. LIC Premium" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} />
-                  </div>
-                </div>
+                {showModal === 'transaction' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="form-group">
+                        <label className="form-label">Date</label>
+                        <input className="form-input" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Amount (₹)</label>
+                        <input className="form-input" type="number" placeholder="" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select className="form-input" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value as any })}>
+                          {Object.keys(CATEGORY_MAP_T).map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="form-group">
+                        <label className="form-label">Sub-Category</label>
+                        <select className="form-input" value={formData.subCategory} onChange={e => setFormData({ ...formData, subCategory: e.target.value })}>
+                          {CATEGORY_MAP_T[formData.category]?.map(sc => <option key={sc}>{sc}</option>) || <option value="">None</option>}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Desc</label>
+                        <input className="form-input" type="text" placeholder="e.g. LIC Premium" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} />
+                      </div>
+                    </div>
+                  </>
+                )}
+                {showModal === 'outstanding' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="form-group">
+                        <label className="form-label">Date</label>
+                        <input className="form-input" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Amount (₹)</label>
+                        <input className="form-input" type="number" placeholder="" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">State</label>
+                        <select className="form-input" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value as any })}>
+                          <option>Payable</option>
+                          <option>Receivable</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select className="form-input" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value as any })}>
+                          {Object.keys(CATEGORY_MAP_O).map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Sub-Category</label>
+                        <select className="form-input" value={formData.subCategory} onChange={e => setFormData({ ...formData, subCategory: e.target.value })}>
+                          {CATEGORY_MAP_O[formData.category]?.map(sc => <option key={sc}>{sc}</option>) || <option value="">None</option>}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Desc</label>
+                        <input className="form-input" type="text" placeholder="e.g. LIC Premium" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} />
+                      </div>
+                    </div>
+                  </>
+                )}
                 <div className="form-group">
                   <label className="form-label">Notes</label>
                   <textarea 
@@ -1525,7 +1584,7 @@ export default function App() {
                 setFormData({
                   ...formData,
                   date: new Date().toISOString().slice(0, 10),
-                  amount: '0',
+                  amount: '',
                   name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
                 });
                 setShowModal('account'); 
@@ -1533,7 +1592,7 @@ export default function App() {
                 setEditId(null);
                 setFormData({
                   date: lastEnteredTxDate,
-                  amount: '0',
+                  amount: '',
                   category: 'Expenses',
                   subCategory: CATEGORY_MAP_T['Expenses'][0],
                   desc: '',
@@ -1557,7 +1616,7 @@ export default function App() {
                 setEditId(null);
                 setFormData({
                   date: lastEnteredTxDate,
-                  amount: '0',
+                  amount: '',
                   category: 'Expenses',
                   subCategory: 'Payment',
                   desc: '',
