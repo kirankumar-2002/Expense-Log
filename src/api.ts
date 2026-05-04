@@ -2,13 +2,22 @@ const SCRIPT_ID = (import.meta as any).env.VITE_APPS_SCRIPT_ID || 'AKfycbx7WQ5WR
 const API_URL = `https://script.google.com/macros/s/${SCRIPT_ID}/exec`;
 
 async function safeFetch(url: string, options?: RequestInit) {
-  const res = await fetch(url, options);
-  const text = await res.text();
   try {
-    return JSON.parse(text);
-  } catch (e) {
-    console.error('Failed to parse JSON from response:', text.slice(0, 100));
-    throw new Error('Server returned non-JSON response. Check console for details.');
+    const res = await fetch(url, options);
+    const text = await res.text();
+    if (text.trim().startsWith("<!DOCTYPE html>") || text.trim().startsWith("<html")) {
+      console.error('Google Apps Script returned HTML instead of JSON. This usually indicates a permissions issue (Script not set to "Access: Anyone") or an invalid Script ID.');
+      throw new Error('Google Script Connection Error: Received HTML response. Please ensure your script is deployed with "Access: Anyone".');
+    }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON from response:", text.slice(0, 200));
+      throw new Error("Server returned non-JSON response. The script might be misconfigured or returning an error.");
+    }
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error("Network error or interrupted connection.");
   }
 }
 

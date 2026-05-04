@@ -86,11 +86,32 @@ const CATEGORY_MAP_O: Record<string, string[]> = {
 };
 
 const fmt = (n: number) => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+
+// Convert a UTC ISO date string (from Google Sheets) to local YYYY-MM-DD.
+// Google Sheets stores dates as midnight in its timezone (IST), which becomes
+// e.g. "2026-04-14T18:30:00.000Z" in UTC for April 15 IST.
+// Naive .slice(0,10) would give "2026-04-14" (wrong), but parsing as Date
+// and using local timezone gives "2026-04-15" (correct).
+const toLocalDateStr = (d: string): string => {
+  if (!d) return '';
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    const yyyy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  } catch {
+    return d;
+  }
+};
+
 const fmtDate = (d: string) => {
   try {
     if (!d) return '';
-    const dt = parseISO(d);
-    return isValid(dt) ? format(dt, 'dd MMM yyyy') : d;
+    // Parse as local Date to avoid timezone shift
+    const dt = new Date(d);
+    return !isNaN(dt.getTime()) ? format(dt, 'dd MMM yyyy') : d;
   } catch (e) {
     return d || '';
   }
@@ -125,7 +146,7 @@ export default function App() {
     subCategory: '',
     desc: '',
     notes: '',
-    account: ACCOUNTS_LIST[0],
+    Accounts: ACCOUNTS_LIST[0],
     state: 'Payable',
     status: 'Pending',
     // Account specific
@@ -173,7 +194,7 @@ export default function App() {
       }
       
       if (formData.category === 'Income' && !editId) {
-        updates.account = 'HDFC Bank';
+        updates.Accounts = 'HDFC Bank';
       }
       
       if (Object.keys(updates).length > 0) {
@@ -193,7 +214,7 @@ export default function App() {
 
   useEffect(() => {
     if (formData.subCategory === 'HDFC Money Back Plus') {
-      setFormData(prev => ({ ...prev, account: 'HDFC Money Back Plus' }));
+      setFormData(prev => ({ ...prev, Accounts: 'HDFC Money Back Plus' }));
     }
   }, [formData.subCategory]);
 
@@ -219,9 +240,12 @@ export default function App() {
         const rawState = String(getVal('State') || '').trim();
         const rawStatus = String(getVal('Status') || '').trim();
 
+        // Use toLocalDateStr to convert UTC ISO dates to correct local dates
+        const rawDate = getVal('Date') || r.Date || '';
+
         return {
           ID: String(getVal('ID') || r.ID || ''),
-          Date: getVal('Date') ? String(getVal('Date')).slice(0, 10) : (r.Date ? String(r.Date).slice(0, 10) : ''),
+          Date: toLocalDateStr(String(rawDate)),
           Amount: typeof r.Amount === 'number' ? r.Amount : parseFloat(String(getVal('Amount') || r.Amount || '0').replace(/[^\d.-]/g, '')) || 0,
           State: rawState || 'Payable',
           Category: getVal('Category') || r.Category || '',
@@ -258,13 +282,11 @@ export default function App() {
   };
 
   const moveRowBetweenSheets = async (item: FinancialRecord, from: 'Transactions' | 'Outstanding', to: 'Transactions' | 'Outstanding', newStatus: 'Pending' | 'Processed') => {
-    const account = item.Accounts || getAccountForCategory(item.Category);
-
+    // Carry over Desc and Accounts exactly as-is from the source record.
+    // Use only the exact column header names to avoid backend key conflicts.
     const addRes = await saveTransaction({
       action: 'add',
       sheet: to,
-      // Provide an empty ID for new inserts to trigger clean generation 
-      // and avoid update conflicts.
       id: '',
       ID: '',
       date: item.Date,
@@ -279,14 +301,9 @@ export default function App() {
       'Sub-Category': item['Sub-Category'],
       status: newStatus,
       Status: newStatus,
-      desc: item.Desc,
-      Desc: item.Desc,
-      notes: item.Notes,
-      Notes: item.Notes,
-      account: account,
-      accounts: account,
-      Account: account,
-      Accounts: account
+      Accounts: item.Accounts || '',
+      Desc: item.Desc || '',
+      Notes: item.Notes || ''
     });
 
     if (addRes.status === 'ok') {
@@ -419,7 +436,7 @@ export default function App() {
           Status: formData.status || (entryType === 'transaction' ? 'Processed' : 'Pending'),
           Desc: formData.desc || '',
           Notes: formData.notes || '',
-          Accounts: formData.account || 'Bank of Baroda'
+          Accounts: formData.Accounts || ''
         };
 
         const currentSheet = entryType === 'transaction' ? 'Transactions' : 'Outstanding';
@@ -458,14 +475,9 @@ export default function App() {
           'Sub-Category': fullRecord['Sub-Category'],
           status: fullRecord.Status,
           Status: fullRecord.Status,
-          desc: fullRecord.Desc,
+          Accounts: fullRecord.Accounts,
           Desc: fullRecord.Desc,
-          notes: fullRecord.Notes,
-          Notes: fullRecord.Notes,
-          account: fullRecord.Accounts,
-          accounts: fullRecord.Accounts,
-          Account: fullRecord.Accounts,
-          Accounts: fullRecord.Accounts
+          Notes: fullRecord.Notes
         };
       }
 
@@ -740,7 +752,7 @@ export default function App() {
                   subCategory: CATEGORY_MAP_T['Expenses'][0],
                   desc: '',
                   notes: '',
-                  account: ACCOUNTS_LIST[0],
+                  Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
                   status: 'Pending',
                   name: '', bank: '', type: 'Bank', balance: ''
@@ -799,7 +811,7 @@ export default function App() {
                       subCategory: CATEGORY_MAP_T['Expenses'][0],
                       desc: '',
                       notes: '',
-                      account: ACCOUNTS_LIST[0],
+                      Accounts: ACCOUNTS_LIST[0],
                       state: 'Payable',
                       status: 'Pending',
                       name: '', bank: '', type: 'Bank', balance: ''
@@ -952,7 +964,7 @@ export default function App() {
                             amount: String(r.Amount),
                             category: r.Category,
                             subCategory: r['Sub-Category'],
-                            account: r.Accounts || 'Bank of Baroda',
+                            Accounts: r.Accounts || 'Bank of Baroda',
                             notes: r.Notes || '',
                             desc: r.Desc || '',
                             state: r.State || 'Payable',
@@ -1015,7 +1027,7 @@ export default function App() {
                       subCategory: 'Payment',
                       desc: '',
                       notes: '',
-                      account: 'Bank of Baroda',
+                      Accounts: 'Bank of Baroda',
                       state: filterState as any,
                       status: 'Pending',
                       name: '', bank: '', type: 'Bank', balance: ''
@@ -1165,7 +1177,7 @@ export default function App() {
                             notes: r.Notes || '',
                             state: r.State || 'Payable',
                             status: r.Status || 'Pending',
-                            account: r.Accounts || 'Bank of Baroda',
+                            Accounts: r.Accounts || 'Bank of Baroda',
                             name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: ''
                           });
                           setShowModal('outstanding');
@@ -1525,7 +1537,7 @@ export default function App() {
                   subCategory: CATEGORY_MAP_T['Expenses'][0],
                   desc: '',
                   notes: '',
-                  account: ACCOUNTS_LIST[0],
+                  Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
                   status: 'Pending',
                   name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
@@ -1549,7 +1561,7 @@ export default function App() {
                   subCategory: 'Payment',
                   desc: '',
                   notes: '',
-                  account: 'Bank of Baroda',
+                  Accounts: 'Bank of Baroda',
                   state: filterState as any,
                   status: 'Pending',
                   name: '', bank: '', type: 'Bank', balance: ''
