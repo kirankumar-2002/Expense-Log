@@ -242,8 +242,8 @@ export default function App() {
     loadAllData();
   }, []);
 
-  const loadAllData = async () => {
-    setLoading(true);
+  const loadAllData = async (showOverlay = true) => {
+    if (showOverlay) setLoading(true);
     setSyncing(true);
     try {
       const [txData, outData, accData] = await Promise.all([
@@ -289,7 +289,7 @@ export default function App() {
       showToast('Connection failed.', 'error');
       setSyncing(false);
     } finally {
-      setLoading(false);
+      if (showOverlay) setLoading(false);
     }
   };
 
@@ -474,7 +474,7 @@ export default function App() {
             showToast(`Moved to ${targetSheet}`);
             setShowModal(null);
             setEditId(null);
-            loadAllData();
+            loadAllData(false);
           } else throw new Error();
           setSyncing(false);
           return;
@@ -509,7 +509,7 @@ export default function App() {
         showToast('Saved successfully');
         setShowModal(null);
         setEditId(null);
-        loadAllData();
+        loadAllData(false);
       } else throw new Error();
     } catch (e) {
       showToast('Save failed', 'error');
@@ -555,7 +555,7 @@ export default function App() {
         setIsEditingOutstanding(false);
         setSelectedOutstanding(new Set());
       }
-      loadAllData();
+      loadAllData(false);
     } catch (e) {
       console.error(e);
       showToast('Update failed', 'error');
@@ -591,7 +591,7 @@ export default function App() {
         setIsEditingOutstanding(false);
         setSelectedOutstanding(new Set());
       }
-      loadAllData();
+      loadAllData(false);
     } catch (e) {
       console.error(e);
       showToast('Delete failed', 'error');
