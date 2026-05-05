@@ -688,7 +688,7 @@ export default function App() {
           <img 
             src="/logo.png" 
             alt="Expense Log Pro" 
-            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-8 h-8" : "w-24 h-auto")} 
+            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-10 h-10" : "w-16 h-16")} 
           />
         </div>
         <nav className="nav-container">
