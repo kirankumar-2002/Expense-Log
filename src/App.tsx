@@ -300,7 +300,7 @@ export default function App() {
     return 'Bank of Baroda';
   };
 
-  const moveRowBetweenSheets = async (item: FinancialRecord, from: 'Transactions' | 'Outstanding', to: 'Transactions' | 'Outstanding', newStatus: 'Pending' | 'Processed') => {
+  const moveRowBetweenTables = async (item: FinancialRecord, from: 'Transactions' | 'Outstanding', to: 'Transactions' | 'Outstanding', newStatus: 'Pending' | 'Processed') => {
     // Carry over Desc and Accounts exactly as-is from the source record.
     // Use only the exact column header names to avoid backend key conflicts.
     const addRes = await saveTransaction({
@@ -467,7 +467,7 @@ export default function App() {
         if (fullRecord.Status === 'Pending') targetSheet = 'Outstanding';
 
         if (editId && currentSheet !== targetSheet) {
-          const res = await moveRowBetweenSheets(fullRecord, currentSheet as any, targetSheet as any, fullRecord.Status as any);
+          const res = await moveRowBetweenTables(fullRecord, currentSheet as any, targetSheet as any, fullRecord.Status as any);
           if (res.status === 'ok') {
             if (entryType === 'transaction') setLastEnteredTxDate(formData.date);
             showToast(`Moved to ${targetSheet}`);
@@ -532,7 +532,7 @@ export default function App() {
         if (item) {
           const targetSheet = newStatus === 'Processed' ? 'Transactions' : 'Outstanding';
           if (type !== targetSheet) {
-            await moveRowBetweenSheets(item, type, targetSheet as any, newStatus);
+            await moveRowBetweenTables(item, type, targetSheet as any, newStatus);
           } else {
             const res = await saveTransaction({ 
               action: 'update', 
