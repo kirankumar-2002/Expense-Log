@@ -202,31 +202,32 @@ export default function App() {
   
   const [filterState, setFilterState] = useState('Payable');
 
-  // Handle category change to reset subcategory and set defaults
+  // Handle category change to reset subcategory ONLY when it's invalid for the new category
   useEffect(() => {
     if (showModal === 'transaction') {
       const allowed = CATEGORY_MAP_T[formData.category] || [];
-      const updates: any = {};
       
-      if (!allowed.includes(formData.subCategory)) {
-        updates.subCategory = allowed[0] || '';
+      // Only reset subcategory if current value is not in the allowed list
+      if (formData.subCategory && !allowed.includes(formData.subCategory)) {
+        setFormData(prev => ({ ...prev, subCategory: allowed[0] || '' }));
+      } else if (!formData.subCategory && allowed.length > 0) {
+        setFormData(prev => ({ ...prev, subCategory: allowed[0] }));
       }
       
+      // Only set default account for NEW entries (not edits)
       if (formData.category === 'Income' && !editId) {
-        updates.Accounts = 'HDFC Bank';
-      }
-      
-      if (Object.keys(updates).length > 0) {
-        setFormData(prev => ({ ...prev, ...updates }));
+        setFormData(prev => ({ ...prev, Accounts: 'HDFC Bank' }));
       }
     } else if (showModal === 'outstanding') {
       const allowed = CATEGORY_MAP_O[formData.category] || [];
-      if (!allowed.includes(formData.subCategory)) {
+      if (formData.subCategory && !allowed.includes(formData.subCategory)) {
         if (formData.category === 'Expenses' && allowed.includes('Payment')) {
           setFormData(prev => ({ ...prev, subCategory: 'Payment' }));
         } else {
           setFormData(prev => ({ ...prev, subCategory: allowed[0] || '' }));
         }
+      } else if (!formData.subCategory && allowed.length > 0) {
+        setFormData(prev => ({ ...prev, subCategory: allowed[0] }));
       }
     }
   }, [formData.category, showModal]);

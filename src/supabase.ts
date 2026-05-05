@@ -121,9 +121,9 @@ export async function sbDeleteAccount(id: string) {
  * Supabase columns use lowercase snake_case while the app uses PascalCase/mixed.
  */
 function mapRecordToRow(record: any, _table: string) {
+  // Never include `id` in the body — it's GENERATED ALWAYS in Postgres.
+  // For updates, the id is passed via the URL query param (e.g. ?id=eq.123).
   return {
-    // Don't send `id` for inserts — it's auto-generated (bigint)
-    ...(record.ID && !String(record.ID).startsWith('new_') ? { id: record.ID } : {}),
     date: record.Date || record.date || null,
     amount: parseFloat(String(record.Amount || record.amount || 0)),
     state: record.State || record.state || 'Payable',
