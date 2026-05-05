@@ -92,11 +92,10 @@ const CATEGORY_MAP_O: Record<string, string[]> = {
 
 const fmt = (n: number) => '₹' + Math.round(n || 0).toLocaleString('en-IN');
 
-// Convert a UTC ISO date string (from Google Sheets) to local YYYY-MM-DD.
-// Google Sheets stores dates as midnight in its timezone (IST), which becomes
-// e.g. "2026-04-14T18:30:00.000Z" in UTC for April 15 IST.
-// Naive .slice(0,10) would give "2026-04-14" (wrong), but parsing as Date
-// and using local timezone gives "2026-04-15" (correct).
+// Convert a UTC ISO date string (from the database) to local YYYY-MM-DD.
+// The database stores dates as midnight UTC, which we need to convert
+// to the local date string for the form inputs.
+
 const toLocalDateStr = (d: string): string => {
   if (!d) return '';
   try {
@@ -639,7 +638,7 @@ export default function App() {
       <div className="loading-overlay">
         <img src="/logo.png" alt="Expense Log Pro" className="w-24 h-24 object-contain mb-4 animate-pulse mx-auto" />
         <div className="loading-bar-wrap"><div className="loading-bar"></div></div>
-        <div className="loading-sub">Connecting to Google Sheets...</div>
+        <div className="loading-sub">Connecting to Database...</div>
       </div>
     );
   }

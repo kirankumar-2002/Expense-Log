@@ -1,8 +1,9 @@
 // Supabase client for Expense-Log
 // Uses the REST API directly (no SDK dependency needed)
 
-const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://udpbbkcrvebyghgaqqgo.supabase.co';
-const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_DUSdBZceaN1fyHYcKztjPg_Db5CYNPm';
+const env = typeof process !== 'undefined' ? (process.env as any) : ((import.meta as any).env || {});
+const SUPABASE_URL = env.VITE_SUPABASE_URL || 'https://udpbbkcrvebyghgaqqgo.supabase.co';
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_DUSdBZceaN1fyHYcKztjPg_Db5CYNPm';
 
 const REST_URL = `${SUPABASE_URL}/rest/v1`;
 
