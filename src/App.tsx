@@ -42,7 +42,12 @@ import {
   Menu,
   History,
   Edit3,
-  Trash2
+  Trash2,
+  Moon,
+  Sun,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Receipt
 } from 'lucide-react';
 
 ChartJS.register(
@@ -121,6 +126,17 @@ type SortConfig = { key: string; direction: 'asc' | 'desc' };
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -641,8 +657,13 @@ export default function App() {
           </button>
           <img src="/logo.png" alt="Expense Log Pro" className="h-10 w-auto object-contain drop-shadow-md" />
         </div>
-        <div className="flex items-center">
-          {/* Live status moved to sidebar */}
+        <div className="flex items-center gap-3">
+          <button 
+            className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            onClick={() => setIsDark(!isDark)}
+          >
+            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
         </div>
       </header>
 
@@ -734,7 +755,14 @@ export default function App() {
         </button>
 
         <div className="sidebar-footer">
-          {/* Live status hidden */}
+          <button 
+            className="flex items-center gap-3 w-full text-muted hover:text-text transition-colors p-2 rounded-lg hover:bg-surface"
+            onClick={() => setIsDark(!isDark)}
+            title="Toggle Theme"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            {!sidebarCollapsed && <span className="font-semibold text-sm">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+          </button>
         </div>
       </aside>
 
@@ -774,10 +802,10 @@ export default function App() {
           </div>
 
           <div className="stats-grid">
-            <StatCard type="income" label="Income" value={dashboardStats.t.Income} count={dashboardStats.c.Income} trend="up" />
-            <StatCard type="expense" label="Expenses" value={dashboardStats.t.Expenses} count={dashboardStats.c.Expenses} trend="down" />
-            <StatCard type="credit" label="Credit" value={dashboardStats.t.Credit} count={dashboardStats.c.Credit} trend="up" />
-            <StatCard type="bills" label="Bills" value={dashboardStats.t.Bills} count={dashboardStats.c.Bills} trend="down" />
+            <StatCard type="income" label="Income" value={dashboardStats.t.Income} count={dashboardStats.c.Income} trend="up" icon={<ArrowDownCircle size={20} />} />
+            <StatCard type="expense" label="Expenses" value={dashboardStats.t.Expenses} count={dashboardStats.c.Expenses} trend="down" icon={<ArrowUpCircle size={20} />} />
+            <StatCard type="credit" label="Credit" value={dashboardStats.t.Credit} count={dashboardStats.c.Credit} trend="up" icon={<CreditCard size={20} />} />
+            <StatCard type="bills" label="Bills" value={dashboardStats.t.Bills} count={dashboardStats.c.Bills} trend="down" icon={<Receipt size={20} />} />
           </div>
 
           <div className="charts-row">
@@ -1577,7 +1605,7 @@ export default function App() {
       <div className="md:hidden">
         {['transactions', 'dashboard', 'timeline', 'accounts'].includes(activePage) && (
           <button 
-            className="fixed bottom-8 right-8 w-16 h-16 bg-[#c84b2f] text-white rounded-2xl flex items-center justify-center shadow-2xl z-[999] active:scale-95 transition-all hover:scale-105 border-4 border-white/20"
+            className="fab"
             onClick={() => {
               if (activePage === 'accounts') {
                 setEditId(null); 
@@ -1611,7 +1639,7 @@ export default function App() {
         )}
         {activePage === 'outstanding' && (
           <button 
-            className="fixed bottom-8 right-8 w-16 h-16 bg-[#c84b2f] text-white rounded-2xl flex items-center justify-center shadow-2xl z-[999] active:scale-95 transition-all hover:scale-105 border-4 border-white/20"
+            className="fab"
             onClick={() => {
                 setEditId(null);
                 setFormData({
@@ -1653,20 +1681,22 @@ function NavItem({ active, onClick, icon, label, collapsed }: { active: boolean;
   );
 }
 
-function StatCard({ type, label, value, count, trend }: { type: string; label: string; value: number; count: number; trend?: 'up' | 'down' }) {
+function StatCard({ type, label, value, count, trend, icon }: { type: string; label: string; value: number; count: number; trend?: 'up' | 'down', icon: ReactNode }) {
   return (
     <div className={cn("stat-card", type)}>
-      <div className="stat-stripe" />
-      <div className="flex justify-between items-start">
-        <div className="stat-label">{label}</div>
+      <div className="stat-header">
+        <div className="stat-icon">{icon}</div>
         {trend && (
-          <div className={cn("text-[10px] font-bold p-1 rounded-sm", trend === 'up' ? "bg-accent2/10 text-accent2" : "bg-accent/10 text-accent")}>
-            {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+          <div className={cn("text-[10px] font-bold p-1 rounded-sm", trend === 'up' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500")}>
+            {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
           </div>
         )}
       </div>
-      <div className="stat-value">{fmt(value)}</div>
-      <div className="stat-count">{count} entries this month</div>
+      <div className="stat-content">
+        <div className="stat-label">{label}</div>
+        <div className="stat-value">{fmt(value)}</div>
+        <div className="stat-count">{count} entries this month</div>
+      </div>
     </div>
   );
 }
