@@ -637,7 +637,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="loading-overlay">
-        <img src="/logo.png" alt="Expense Log Pro" className="w-24 h-24 object-contain mb-4 animate-pulse mx-auto" />
+        <img src="/logo.png" alt="Expense Log Pro" className="w-48 h-48 object-contain mb-4 animate-pulse mx-auto" />
         <div className="loading-bar-wrap"><div className="loading-bar"></div></div>
         <div className="loading-sub">Connecting to Database...</div>
       </div>
@@ -709,7 +709,7 @@ export default function App() {
           <img 
             src="/logo.png" 
             alt="Expense Log Pro" 
-            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-10 h-10" : "w-16 h-16")} 
+            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-14 h-14" : "w-20 h-20")} 
           />
         </div>
         <nav className="nav-container">
