@@ -4,8 +4,13 @@
  */
 
 import { useState, useEffect, useMemo, ReactNode } from 'react';
+import { auth } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import SignIn from './SignIn';
+import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
+import { LogOut } from 'lucide-react';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -124,9 +129,25 @@ const fmtDate = (d: string) => {
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 
 export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-  
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setIsAuthLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -634,6 +655,22 @@ export default function App() {
     };
   }, [dashboardStats]);
 
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+        <div className="w-12 h-12 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return authMode === 'signin' ? (
+      <SignIn onToggle={() => setAuthMode('signup')} />
+    ) : (
+      <SignUp onToggle={() => setAuthMode('signin')} />
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading-overlay">
@@ -647,7 +684,7 @@ export default function App() {
   return (
     <div className="app-wrapper">
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#000000] z-[80] flex items-center px-4 justify-between border-b border-white/10 shadow-lg">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-white/5 shadow-xl">
         <div className="flex items-center gap-2">
           <button 
             className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
@@ -754,7 +791,7 @@ export default function App() {
           {sidebarCollapsed ? <ChevronRight size={18} /> : <div className="flex items-center gap-3"><ChevronLeft size={18} /><span className="nav-label">Collapse Sidebar</span></div>}
         </button>
 
-        <div className="sidebar-footer">
+        <div className="sidebar-footer space-y-2">
           <button 
             className="flex items-center gap-3 w-full text-muted hover:text-text transition-colors p-2 rounded-lg hover:bg-surface"
             onClick={() => setIsDark(!isDark)}
@@ -762,6 +799,14 @@ export default function App() {
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
             {!sidebarCollapsed && <span className="font-semibold text-sm">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
+          </button>
+          <button 
+            className="flex items-center gap-3 w-full text-[var(--expense)] hover:brightness-110 transition-colors p-2 rounded-lg hover:bg-[var(--expense-light)]"
+            onClick={() => signOut(auth)}
+            title="Sign Out"
+          >
+            <LogOut size={18} />
+            {!sidebarCollapsed && <span className="font-semibold text-sm">Sign Out</span>}
           </button>
         </div>
       </aside>
@@ -1708,19 +1753,21 @@ const chartOptions = {
     legend: { display: false },
     tooltip: { 
       bodyFont: { family: 'Syne' },
-      padding: 10,
-      backgroundColor: '#1a1814',
-      titleFont: { family: 'Syne', weight: 'bold' as const }
+      padding: 12,
+      backgroundColor: '#0f172a',
+      titleFont: { family: 'Syne', weight: 'bold' as const },
+      borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 1
     }
   },
   scales: {
     x: { 
-      ticks: { color: '#7a7570', font: { family: 'JetBrains Mono', size: 10 } },
+      ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
       grid: { display: false }
     },
     y: { 
-      ticks: { color: '#7a7570', font: { family: 'JetBrains Mono', size: 10 }, callback: (v: any) => '₹' + v },
-      grid: { color: 'rgba(212,207,196,0.15)' }
+      ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 }, callback: (v: any) => '₹' + v },
+      grid: { color: 'rgba(100,116,139,0.1)' }
     }
   }
 };
@@ -1731,8 +1778,8 @@ const donutOptions = {
   plugins: {
     legend: { 
       position: 'bottom' as const,
-      labels: { color: '#7a7570', font: { family: 'Syne', size: 10 }, padding: 16, usePointStyle: true } 
+      labels: { color: '#64748b', font: { family: 'Syne', size: 10 }, padding: 16, usePointStyle: true } 
     }
   },
-  cutout: '70%'
+  cutout: '75%'
 };
