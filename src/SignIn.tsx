@@ -19,7 +19,7 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       if (!userCredential.user.emailVerified) {
-        setError("Please verify your email before logging in. Check your inbox.");
+        setError("Please verify your email before signing in. Check your inbox.");
         await auth.signOut();
       }
       // Redirect handled by onAuthStateChanged in App.tsx if verified

@@ -174,20 +174,23 @@ export default function App() {
             
             // Check if userId is missing (for Google users who haven't set it)
             if (!data.userId) {
-              setShowModal('set-userid');
+              const generatedId = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
+              await setDoc(userRef, { userId: generatedId }, { merge: true });
+              setUser({ ...u, ...data, userId: generatedId });
             }
           } else {
             // First time login (likely Google) - initialize basic profile
+            const generatedId = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
             const newUser = { 
               email: u.email, 
               name: u.displayName || '',
+              userId: generatedId,
               plan: 'free', 
               createdAt: new Date().toISOString() 
             };
             await setDoc(userRef, newUser);
             setUser({ ...u, ...newUser });
             setUserPlan('free');
-            setShowModal('set-userid');
           }
         } catch (err) {
           console.error("Error fetching user data:", err);
@@ -824,24 +827,26 @@ export default function App() {
     <div className="app-wrapper">
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[var(--bg)]/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-[var(--border)] shadow-sm">
-        <div className="flex items-center gap-2">
-          <button 
-            className="text-[var(--text)] p-2 hover:bg-[var(--surface)] rounded-lg transition-colors"
-            onClick={() => setMobileSidebarOpen(true)}
-          >
-            <Menu size={20} />
-          </button>
-          <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
-          <span className="font-bold text-sm text-[var(--text)]">Expense Log Pro</span>
-        </div>
         <div className="flex items-center gap-3">
           <button 
-            className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
-            onClick={() => setIsDark(!isDark)}
+            className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
+            onClick={() => setMobileSidebarOpen(true)}
           >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            <Menu size={18} />
           </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 mobile-header-logo">
+              <Landmark size={18} />
+            </div>
+            <span className="font-bold text-sm text-[var(--text)] mobile-header-text">Expense Log Pro</span>
+          </div>
         </div>
+        <button 
+          className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
+          onClick={() => setIsDark(!isDark)}
+        >
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
       </header>
 
       {/* Sidebar Overlay */}
@@ -1492,8 +1497,8 @@ export default function App() {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className={cn(
-                          "text-[11px] px-4 py-2 rounded-full font-bold uppercase tracking-wider block w-fit mx-auto",
-                          (r as any).State === 'Payable' ? "text-green-600 bg-green-100" : "text-red-600 bg-red-100"
+                          "outstanding-state",
+                          (r as any).State === 'Payable' ? "payable" : "receivable"
                         )}>
                           {(r as any).State || 'Payable'}
                         </span>
@@ -1701,41 +1706,12 @@ export default function App() {
             <div className="flex justify-between items-center mb-6">
               <div className="modal-title m-0">
                 {showModal === 'account-history' ? `${selectedAccount} History` : 
-                 showModal === 'set-userid' ? 'Set Your User ID' :
-                 `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}
+                  `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}
               </div>
-              {showModal !== 'set-userid' && (
                 <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={20} /></button>
-              )}
             </div>
             
-            {showModal === 'set-userid' ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted leading-relaxed">
-                  Welcome! Please choose a unique User ID to complete your profile. This ID will represent you in the Expense Log Pro system.
-                </p>
-                <div className="form-group">
-                  <label className="form-label">User ID</label>
-                  <div className="relative">
-                    <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
-                    <input 
-                      className="form-input pl-12" 
-                      placeholder="e.g. johndoe_24" 
-                      value={newUserId} 
-                      onChange={e => setNewUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} 
-                    />
-                  </div>
-                  <p className="text-[10px] text-muted mt-2">Only letters, numbers, and underscores allowed.</p>
-                </div>
-                <button 
-                  className="w-full btn btn-primary h-12 mt-2" 
-                  onClick={handleSetUserId}
-                  disabled={!newUserId || syncing}
-                >
-                  {syncing ? 'Saving...' : 'Set User ID'}
-                </button>
-              </div>
-            ) : showModal === 'account' ? (
+            {showModal === 'account' ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="form-group">

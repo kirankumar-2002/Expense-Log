@@ -17,16 +17,17 @@ const SignUp = ({ onToggle, onSuccess }) => {
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) return setError("Passwords don't match");
-    if (!userId) return setError("User ID is required");
     setError('');
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      const generatedId = email ? email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
+      
       // Store user details in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         name,
-        userId: userId.toLowerCase(),
+        userId: generatedId.toLowerCase(),
         email,
         plan: 'free',
         createdAt: new Date().toISOString()
@@ -55,44 +56,25 @@ const SignUp = ({ onToggle, onSuccess }) => {
               <Landmark size={32} />
             </div>
           </div>
-          <h1 className="text-3xl font-extrabold text-[var(--text)] tracking-tight">Create Account</h1>
+          <h1 className="text-3xl font-extrabold text-[var(--text)] tracking-tight">Sign Up</h1>
           <p className="text-[var(--muted)] text-sm mt-3 font-medium">Start your financial journey today</p>
         </div>
 
         <form onSubmit={handleSignUp} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[var(--muted)] ml-1 uppercase tracking-wider">Full Name</label>
-              <div className="relative group">
-                <div className="absolute left-4 top-0 bottom-0 flex items-center justify-center pointer-events-none">
-                  <User className="text-[var(--muted)] group-focus-within:text-indigo-600 transition-colors" size={20} />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full h-14 pl-12 pr-4 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl text-base focus:border-indigo-500 focus:bg-[var(--card)] transition-all outline-none font-medium shadow-sm"
-                  required
-                />
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-[var(--muted)] ml-1 uppercase tracking-wider">Full Name</label>
+            <div className="relative group">
+              <div className="absolute left-4 top-0 bottom-0 flex items-center justify-center pointer-events-none">
+                <User className="text-[var(--muted)] group-focus-within:text-indigo-600 transition-colors" size={20} />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[var(--muted)] ml-1 uppercase tracking-wider">User ID</label>
-              <div className="relative group">
-                <div className="absolute left-4 top-0 bottom-0 flex items-center justify-center pointer-events-none">
-                  <AtSign className="text-[var(--muted)] group-focus-within:text-indigo-600 transition-colors" size={20} />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="johndoe"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
-                  className="w-full h-14 pl-12 pr-4 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl text-base focus:border-indigo-500 focus:bg-[var(--card)] transition-all outline-none font-medium shadow-sm"
-                  required
-                />
-              </div>
+              <input 
+                type="text" 
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full h-14 pl-12 pr-4 bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl text-base focus:border-indigo-500 focus:bg-[var(--card)] transition-all outline-none font-medium shadow-sm"
+                required
+              />
             </div>
           </div>
 
@@ -165,7 +147,7 @@ const SignUp = ({ onToggle, onSuccess }) => {
             disabled={loading}
             className="w-full h-12 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6"
           >
-            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Create Account'}
+            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 'Sign Up'}
           </button>
         </form>
 
