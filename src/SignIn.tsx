@@ -45,8 +45,8 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
   return (
     <div className="auth-page">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         className="auth-card"
       >
         <div className="auth-icon-wrap">
@@ -130,7 +130,9 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
           </button>
         </form>
 
-        <div className="auth-divider">OR</div>
+        <div className="auth-divider">
+          <span className="auth-divider-text">OR</span>
+        </div>
 
         <button 
           onClick={handleGoogleSignIn}

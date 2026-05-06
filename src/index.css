@@ -427,47 +427,62 @@ tr:hover td { background: var(--surface); }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--auth-bg);
+  background-color: #f5f7ff;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.1) 0px, transparent 50%);
   padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
 .auth-card {
   width: 100%;
   max-width: 440px;
-  background: var(--auth-card);
-  border-radius: 40px;
-  padding: 48px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-radius: 48px;
+  padding: 64px 48px;
+  box-shadow: 
+    0 40px 100px rgba(0, 0, 0, 0.04),
+    0 1px 1px rgba(255, 255, 255, 0.8) inset;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  position: relative;
+  z-index: 10;
 }
 
 .auth-icon-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
   background: var(--auth-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  margin: 0 auto 32px;
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.2);
+  margin: 0 auto 28px;
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.25);
 }
 
 .auth-title {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 800;
   text-align: center;
-  margin-bottom: 8px;
-  color: #1a1a1a;
+  margin-bottom: 12px;
+  color: #111827;
+  letter-spacing: -0.5px;
 }
 
 .auth-subtitle {
   text-align: center;
   color: #6b7280;
-  font-size: 15px;
+  font-size: 14px;
   margin-bottom: 40px;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .auth-input-group {
@@ -483,26 +498,30 @@ tr:hover td { background: var(--surface); }
 .auth-input-icon {
   position: absolute;
   left: 16px;
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .auth-input {
   width: 100%;
-  height: 56px;
+  height: 52px;
   padding: 0 16px 0 48px;
-  background: var(--auth-input-bg);
-  border: 1.5px solid #f1f5f9;
-  border-radius: 16px;
-  font-size: 16px;
-  color: #1a1a1a;
-  transition: all 0.2s;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #111827;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.auth-input::placeholder {
+  color: #94a3b8;
 }
 
 .auth-input:focus {
   border-color: #6366f1;
-  background: #fff;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.06);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
 }
 
 .auth-options {
@@ -545,36 +564,32 @@ tr:hover td { background: var(--surface); }
 
 .auth-submit-btn {
   width: 100%;
-  height: 56px;
+  height: 52px;
   background: var(--auth-gradient);
   color: white;
-  border-radius: 18px;
+  border-radius: 16px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   border: none;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-  margin-bottom: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+  margin-bottom: 32px;
 }
 
 .auth-submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.25);
-}
-
-.auth-submit-btn:active {
-  transform: translateY(0);
+  box-shadow: 0 12px 28px rgba(99, 102, 241, 0.4);
 }
 
 .auth-divider {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   margin: 32px 0;
-  color: #9ca3af;
-  font-size: 12px;
-  font-weight: 700;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -587,20 +602,29 @@ tr:hover td { background: var(--surface); }
   background: #f1f5f9;
 }
 
+.auth-divider-text {
+  background: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
 .auth-social-btn {
   width: 100%;
-  height: 56px;
+  height: 52px;
   background: white;
-  border: 1.5px solid #f1f5f9;
-  border-radius: 18px;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   font-weight: 600;
+  font-size: 14px;
   color: #4b5563;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .auth-social-btn:hover {
