@@ -1522,7 +1522,7 @@ export default function App() {
             </section>
 
         {/* Monthly (Timeline) */}
-        <section className={cn("page-container", activePage === 'timeline' && "active")}>
+        <section className={cn("page-container", activePage === 'monthly' && "active")}>
           <div className="page-header flex flex-col gap-4">
             <div className="flex flex-row items-center justify-between gap-4 w-full">
               <div>
@@ -1869,7 +1869,7 @@ export default function App() {
 
       {/* Floating Action Button for Mobile */}
       <div className="md:hidden">
-        {['transactions', 'dashboard', 'timeline', 'accounts'].includes(activePage) && (
+        {['transactions', 'dashboard', 'monthly', 'accounts'].includes(activePage) && (
           <button 
             className="fab"
             onClick={() => {
