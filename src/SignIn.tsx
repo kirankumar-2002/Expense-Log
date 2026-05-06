@@ -4,19 +4,25 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { Mail, Lock, LogIn, Github, Chrome, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const SignIn = ({ onToggle }) => {
-  const [email, setEmail] = useState('');
+const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
+  const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError('');
+    setInfoMessage('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Redirect handled by onAuthStateChanged in App.tsx
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCredential.user.emailVerified) {
+        setError("Please verify your email before logging in. Check your inbox.");
+        await auth.signOut();
+      }
+      // Redirect handled by onAuthStateChanged in App.tsx if verified
     } catch (err) {
       setError(err.message.replace('Firebase: ', ''));
     } finally {
@@ -27,7 +33,11 @@ const SignIn = ({ onToggle }) => {
   const handleGoogleSignIn = async () => {
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      if (!userCredential.user.emailVerified) {
+        setError("Your Google email is not verified. Please verify it in your Google settings.");
+        await auth.signOut();
+      }
     } catch (err) {
       setError(err.message.replace('Firebase: ', ''));
     }
@@ -38,7 +48,7 @@ const SignIn = ({ onToggle }) => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-max-w-[400px] bg-[var(--card)] p-8 rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border)] relative overflow-hidden"
+        className="w-full max-w-[400px] bg-[var(--card)] p-8 rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border)] relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-full h-2 bg-[var(--brand-gradient)]"></div>
         
@@ -82,6 +92,16 @@ const SignIn = ({ onToggle }) => {
               />
             </div>
           </div>
+
+          {infoMessage && !error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 bg-[var(--income-light)] border border-[var(--income)] rounded-[var(--radius-sm)] text-[var(--text)] text-xs text-center"
+            >
+              {infoMessage}
+            </motion.div>
+          )}
 
           {error && (
             <motion.div 

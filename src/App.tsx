@@ -132,6 +132,8 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [prefilledEmail, setPrefilledEmail] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -142,7 +144,11 @@ export default function App() {
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+      if (u && !u.emailVerified) {
+        setUser(null);
+      } else {
+        setUser(u);
+      }
       setIsAuthLoading(false);
     });
     return unsubscribe;
@@ -665,9 +671,26 @@ export default function App() {
 
   if (!user) {
     return authMode === 'signin' ? (
-      <SignIn onToggle={() => setAuthMode('signup')} />
+      <SignIn 
+        onToggle={() => {
+          setAuthMode('signup');
+          setSignupSuccess(false);
+        }} 
+        prefilledEmail={prefilledEmail}
+        initialMessage={signupSuccess ? "Your account has been created. Please check your email and verify your address before logging in." : ""}
+      />
     ) : (
-      <SignUp onToggle={() => setAuthMode('signin')} />
+      <SignUp 
+        onToggle={() => {
+          setAuthMode('signin');
+          setSignupSuccess(false);
+        }} 
+        onSuccess={(email: string) => {
+          setPrefilledEmail(email);
+          setSignupSuccess(true);
+          setAuthMode('signin');
+        }}
+      />
     );
   }
 

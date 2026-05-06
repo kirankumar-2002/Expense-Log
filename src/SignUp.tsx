@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { auth } from './firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { Mail, Lock, UserPlus, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const SignUp = ({ onToggle }) => {
+const SignUp = ({ onToggle, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,17 +13,14 @@ const SignUp = ({ onToggle }) => {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    if (password !== confirmPassword) return setError("Passwords don't match");
     setError('');
-    
-    if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      return;
-    }
-
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // Redirect handled by onAuthStateChanged in App.tsx
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      await auth.signOut(); 
+      if (onSuccess) onSuccess(email);
     } catch (err) {
       setError(err.message.replace('Firebase: ', ''));
     } finally {
@@ -36,7 +33,7 @@ const SignUp = ({ onToggle }) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-max-w-[400px] bg-[var(--card)] p-8 rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border)] relative overflow-hidden"
+        className="w-full max-w-[400px] bg-[var(--card)] p-8 rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border)] relative overflow-hidden"
       >
         <div className="absolute top-0 left-0 w-full h-2 bg-[var(--brand-gradient)]"></div>
         
