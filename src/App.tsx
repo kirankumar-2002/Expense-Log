@@ -191,30 +191,6 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  // Sync plan state to Analytics
-  useEffect(() => {
-    if (user) {
-      setAnalyticsUserPlan(userPlan);
-    }
-  }, [userPlan, user]);
-
-  // Track Page Views
-  useEffect(() => {
-    logAnalyticsEvent('screen_view', { 
-      firebase_screen: activePage, 
-      plan: userPlan 
-    });
-  }, [activePage, userPlan]);
-
-  useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
 
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
@@ -234,6 +210,32 @@ export default function App() {
 
   // Form state
   const [editId, setEditId] = useState<string | null>(null);
+
+  // Sync plan state to Analytics
+  useEffect(() => {
+    if (user) {
+      setAnalyticsUserPlan(userPlan);
+    }
+  }, [userPlan, user]);
+
+  // Track Page Views
+  useEffect(() => {
+    logAnalyticsEvent('screen_view', { 
+      firebase_screen: activePage, 
+      plan: userPlan 
+    });
+  }, [activePage, userPlan]);
+
+  // Theme Persistence
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     amount: '',
