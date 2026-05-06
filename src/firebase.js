@@ -22,13 +22,17 @@ export const googleProvider = new GoogleAuthProvider();
 // Analytics Helpers
 export const setAnalyticsUserPlan = (plan) => {
   if (analytics) {
-    setUserProperties(analytics, { plan_type: plan });
+    const isLocal = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    setUserProperties(analytics, { plan_type: plan, debug_mode: isLocal });
   }
 };
 
 export const logAnalyticsEvent = (name, params) => {
   if (analytics) {
-    logEvent(analytics, name, params);
+    const isLocal = typeof window !== 'undefined' && 
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    logEvent(analytics, name, { ...params, debug_mode: isLocal });
   }
 };
 export default app;
