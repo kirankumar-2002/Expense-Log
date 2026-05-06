@@ -4,13 +4,47 @@
  */
 
 import { useState, useEffect, useMemo, ReactNode } from 'react';
-import { auth } from './firebase';
+import { auth, db, setAnalyticsUserPlan, logAnalyticsEvent } from './firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
-import { LogOut } from 'lucide-react';
+import { 
+  Plus, 
+  Trash2, 
+  Search, 
+  Filter, 
+  ArrowRightLeft, 
+  LayoutDashboard, 
+  Clock, 
+  BarChart3, 
+  Landmark, 
+  Menu, 
+  Sun, 
+  Moon, 
+  LogOut, 
+  ChevronLeft, 
+  ChevronRight, 
+  Download, 
+  Crown,
+  Zap,
+  Gem,
+  CheckCircle2,
+  Lock,
+  WalletCards,
+  ArrowUpRight,
+  ArrowDownRight,
+  RefreshCcw,
+  History,
+  Edit3,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Receipt,
+  CreditCard,
+  X
+} from 'lucide-react';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -27,33 +61,6 @@ import { Line, Doughnut } from 'react-chartjs-2';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, isValid } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { 
-  LayoutDashboard, 
-  ArrowRightLeft, 
-  Clock, 
-  BarChart3, 
-  WalletCards, 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  Landmark,
-  CreditCard,
-  Search,
-  Filter,
-  X,
-  RefreshCcw,
-  Menu,
-  History,
-  Edit3,
-  Trash2,
-  Moon,
-  Sun,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  Receipt
-} from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -134,6 +141,8 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [prefilledEmail, setPrefilledEmail] = useState('');
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [userPlan, setUserPlan] = useState<'free' | 'premium'>('free');
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -143,16 +152,59 @@ export default function App() {
 
   // Auth Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u && !u.emailVerified) {
-        setUser(null);
-      } else {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        // Only allow verified users
+        if (!u.emailVerified) {
+          setUser(null);
+          setIsAuthLoading(false);
+          return;
+        }
+
         setUser(u);
+        
+        // Fetch/Initialize Plan from Firestore
+        try {
+          const userRef = doc(db, 'users', u.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            setUserPlan(userDoc.data().plan || 'free');
+          } else {
+            // First time login - set default free plan
+            await setDoc(userRef, { 
+              email: u.email, 
+              plan: 'free', 
+              createdAt: new Date().toISOString() 
+            });
+            setUserPlan('free');
+          }
+        } catch (err) {
+          console.error("Error fetching plan:", err);
+          setUserPlan('free'); // Default to free on error
+        }
+      } else {
+        setUser(null);
+        setUserPlan('free');
       }
       setIsAuthLoading(false);
     });
     return unsubscribe;
   }, []);
+
+  // Sync plan state to Analytics
+  useEffect(() => {
+    if (user) {
+      setAnalyticsUserPlan(userPlan);
+    }
+  }, [userPlan, user]);
+
+  // Track Page Views
+  useEffect(() => {
+    logAnalyticsEvent('screen_view', { 
+      firebase_screen: activePage, 
+      plan: userPlan 
+    });
+  }, [activePage, userPlan]);
 
   useEffect(() => {
     if (isDark) {
@@ -163,6 +215,7 @@ export default function App() {
       localStorage.setItem('theme', 'light');
     }
   }, [isDark]);
+
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -591,6 +644,39 @@ export default function App() {
     }
   };
 
+  const handleExport = () => {
+    if (userPlan === 'free') {
+      logAnalyticsEvent('feature_blocked', { feature: 'export', plan: 'free' });
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+    try {
+      logAnalyticsEvent('export_data', { type: 'csv' });
+      const headers = ["Date", "Category", "Sub-Category", "Amount", "Notes"];
+      const csvData = transactions.map(t => [
+        t.Date, 
+        t.Category, 
+        t['Sub-Category'], 
+        t.Amount, 
+        t.Notes ? t.Notes.replace(/,/g, ' ') : ''
+      ]);
+      const csvContent = [headers, ...csvData].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Expense_Log_Export_${format(new Date(), 'yyyy_MM_dd')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Export successful');
+    } catch (err) {
+      console.error(err);
+      showToast('Export failed', 'error');
+    }
+  };
+
   const handleBulkDelete = async (type: 'Transactions' | 'Outstanding') => {
     const selected = type === 'Transactions' ? selectedTransactions : selectedOutstanding;
     if (selected.size === 0) return;
@@ -763,14 +849,90 @@ export default function App() {
         </div>
       </div>
 
+      {/* Upgrade Modal */}
+      <div className={cn("modal-overlay flex items-center justify-center p-4", isUpgradeModalOpen && "open")}>
+        <div className="modal-content max-w-[450px] w-full p-8 animate-in fade-in zoom-in duration-300 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500"></div>
+          
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-amber-400/20 text-amber-400 rounded-2xl flex items-center justify-center mb-6 shadow-glow-amber">
+              <Crown size={32} />
+            </div>
+            
+            <h3 className="text-2xl font-bold mb-2 text-text">Upgrade to Premium</h3>
+            <p className="text-muted text-sm mb-8 leading-relaxed">
+              Unlock the full potential of your financial management with professional tools and deep insights.
+            </p>
+
+            <div className="w-full space-y-3 mb-8">
+              {[
+                { icon: <BarChart3 size={16} />, text: "Advanced Analytics & Forecasts" },
+                { icon: <Download size={16} />, text: "Export Data (CSV, PDF, Excel)" },
+                { icon: <RefreshCcw size={16} />, text: "Real-time Cloud Sync Priority" },
+                { icon: <History size={16} />, text: "Unlimited Historical Data" }
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-surface rounded-xl border border-white/5">
+                  <div className="text-amber-400">{feature.icon}</div>
+                  <span className="text-sm font-medium text-text">{feature.text}</span>
+                  <CheckCircle2 size={16} className="ml-auto text-emerald-400" />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-4 w-full">
+              <button 
+                className="flex-1 btn btn-ghost h-12 font-semibold"
+                onClick={() => setIsUpgradeModalOpen(false)}
+              >
+                Maybe Later
+              </button>
+              <button 
+                className="flex-[1.5] btn bg-amber-400 hover:bg-amber-500 text-slate-950 h-12 font-bold shadow-lg shadow-amber-400/20 rounded-xl flex items-center justify-center gap-2 group"
+                onClick={async () => {
+                  if (!user) return;
+                  try {
+                    logAnalyticsEvent('begin_checkout', { value: 10, currency: 'USD' });
+                    const userRef = doc(db, 'users', user.uid);
+                    await setDoc(userRef, { plan: 'premium' }, { merge: true });
+                    setUserPlan('premium');
+                    logAnalyticsEvent('purchase', { value: 10, currency: 'USD', transaction_id: `upg_${Date.now()}` });
+                    setIsUpgradeModalOpen(false);
+                  } catch (err) {
+                    console.error("Upgrade failed:", err);
+                    logAnalyticsEvent('upgrade_failed', { error: err.message });
+                  }
+                }}
+              >
+                Go Premium <ArrowRightLeft size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+            
+            <p className="mt-6 text-[10px] text-muted font-medium uppercase tracking-[0.2em]">
+              Secure payment processed via Profit Studio
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Sidebar */}
       <aside className={cn("sidebar", sidebarCollapsed && "collapsed", mobileSidebarOpen && "open")}>
-        <div className="md:flex hidden px-6 py-6 items-center justify-center border-b border-white/5">
+        <div className="md:flex hidden px-6 py-4 items-center justify-center border-b border-white/5 flex-col gap-3">
           <img 
             src="/logo.png" 
             alt="Expense Log Pro" 
-            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-14 h-14" : "w-20 h-20")} 
+            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-10 h-10" : "w-16 h-16")} 
           />
+          {!sidebarCollapsed && (
+            <div className={cn(
+              "flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+              userPlan === 'premium' 
+                ? "bg-amber-400/10 text-amber-400 border-amber-400/20" 
+                : "bg-blue-400/10 text-blue-400 border-blue-400/20"
+            )}>
+              {userPlan === 'premium' ? <Crown size={12} /> : <Zap size={12} />}
+              {userPlan} plan
+            </div>
+          )}
         </div>
         <nav className="nav-container">
           <NavItem 
@@ -815,6 +977,16 @@ export default function App() {
         </button>
 
         <div className="sidebar-footer space-y-2">
+          {userPlan === 'free' && (
+            <button 
+              className="flex items-center gap-3 w-full text-amber-400 hover:brightness-110 transition-colors p-2 rounded-lg bg-amber-400/10 border border-amber-400/20 group"
+              onClick={() => setIsUpgradeModalOpen(true)}
+              title="Upgrade to Premium"
+            >
+              <Crown size={18} className="group-hover:scale-110 transition-transform" />
+              {!sidebarCollapsed && <span className="font-bold text-sm">Upgrade to Pro</span>}
+            </button>
+          )}
           <button 
             className="flex items-center gap-3 w-full text-muted hover:text-text transition-colors p-2 rounded-lg hover:bg-surface"
             onClick={() => setIsDark(!isDark)}
@@ -941,7 +1113,7 @@ export default function App() {
                 )}
 
                 <button 
-                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9", (showFilters || showSearch) && "bg-accent/10 text-accent")} 
+                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9 relative", (showFilters || showSearch) && "bg-accent/10 text-accent")} 
                   onClick={() => {
                     setShowFilters(!showFilters);
                     setShowSearch(!showFilters);
@@ -951,6 +1123,17 @@ export default function App() {
                   <Filter size={16} />
                   <span className="hidden md:inline ml-1">Filter</span>
                 </button>
+
+                <button 
+                  className="btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9 relative group"
+                  onClick={handleExport}
+                  title="Export Data (Premium)"
+                >
+                  <Download size={16} className={cn(userPlan === 'free' && "text-muted")} />
+                  <span className={cn("hidden md:inline ml-1", userPlan === 'free' && "text-muted")}>Export</span>
+                  {userPlan === 'free' && <Lock size={10} className="absolute -top-0.5 -right-0.5 text-amber-500 bg-slate-900 rounded-full p-0.5" />}
+                </button>
+
               </div>
             </div>
 
@@ -1349,7 +1532,22 @@ export default function App() {
                 <div className="page-title">Monthly<span>.</span></div>
                 <div className="page-sub">Historical flow overview</div>
               </div>
-              <div>
+              <div className="flex gap-2">
+                {userPlan === 'free' ? (
+                  <button 
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className="btn btn-sm bg-amber-400/10 text-amber-400 border border-amber-400/20 flex items-center gap-2 px-3 hover:bg-amber-400/20 transition-all"
+                  >
+                    <Crown size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Advanced Insights</span>
+                    <Lock size={12} />
+                  </button>
+                ) : (
+                  <button className="btn btn-sm bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 flex items-center gap-2 px-3">
+                    <Gem size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">PRO Analytics Active</span>
+                  </button>
+                )}
                 <select className="filter-select w-24 h-9" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                   {Array.from(new Set([...months.map(m => m.split('-')[0]), new Date().getFullYear().toString()])).sort((a,b) => b.localeCompare(a)).map(y => <option key={y} value={y}>{y}</option>)}
                 </select>

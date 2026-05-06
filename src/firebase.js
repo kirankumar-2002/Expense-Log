@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getAnalytics, setUserProperties, logEvent } from "firebase/analytics";
 
 const firebaseConfig = {
   projectId: "expense-log-kiran",
@@ -13,5 +15,20 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const googleProvider = new GoogleAuthProvider();
+
+// Analytics Helpers
+export const setAnalyticsUserPlan = (plan) => {
+  if (analytics) {
+    setUserProperties(analytics, { plan_type: plan });
+  }
+};
+
+export const logAnalyticsEvent = (name, params) => {
+  if (analytics) {
+    logEvent(analytics, name, params);
+  }
+};
 export default app;

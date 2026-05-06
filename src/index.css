@@ -28,8 +28,11 @@
   /* Brand & Category Colors */
   --accent: #6366f1; 
   --accent-hover: #4f46e5;
-  --brand-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --brand-gradient-hover: linear-gradient(135deg, #4f46e5, #7c3aed);
+  --shadow-glow: 0 0 15px rgba(139, 92, 246, 0.3);
+  --shadow-glow-amber: 0 0 20px rgba(251, 191, 36, 0.4);
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --premium-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  --brand-gradient-hover: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
   --accent-light: rgba(99, 102, 241, 0.1);
   
   --income: #10b981;
