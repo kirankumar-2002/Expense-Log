@@ -43,7 +43,8 @@ import {
   ArrowUpCircle,
   Receipt,
   CreditCard,
-  X
+  X,
+  AtSign
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -60,6 +61,7 @@ import {
 import { Line, Doughnut } from 'react-chartjs-2';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, isValid } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
+import { motion } from 'motion/react';
 import { twMerge } from 'tailwind-merge';
 
 ChartJS.register(
@@ -161,26 +163,36 @@ export default function App() {
           return;
         }
 
-        setUser(u);
-        
-        // Fetch/Initialize Plan from Firestore
+        // Fetch/Initialize User from Firestore
         try {
           const userRef = doc(db, 'users', u.uid);
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
-            setUserPlan(userDoc.data().plan || 'free');
+            const data = userDoc.data();
+            setUser({ ...u, ...data });
+            setUserPlan(data.plan || 'free');
+            
+            // Check if userId is missing (for Google users who haven't set it)
+            if (!data.userId) {
+              setShowModal('set-userid');
+            }
           } else {
-            // First time login - set default free plan
-            await setDoc(userRef, { 
+            // First time login (likely Google) - initialize basic profile
+            const newUser = { 
               email: u.email, 
+              name: u.displayName || '',
               plan: 'free', 
               createdAt: new Date().toISOString() 
-            });
+            };
+            await setDoc(userRef, newUser);
+            setUser({ ...u, ...newUser });
             setUserPlan('free');
+            setShowModal('set-userid');
           }
         } catch (err) {
-          console.error("Error fetching plan:", err);
-          setUserPlan('free'); // Default to free on error
+          console.error("Error fetching user data:", err);
+          setUser(u);
+          setUserPlan('free');
         }
       } else {
         setUser(null);
@@ -194,13 +206,13 @@ export default function App() {
 
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-  const [showModal, setShowModal] = useState<'transaction' | 'outstanding' | 'account' | 'account-history' | null>(null);
+  const [showModal, setShowModal] = useState<'transaction' | 'outstanding' | 'account' | 'account-history' | 'set-userid' | null>(null);
+  const [newUserId, setNewUserId] = useState('');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [historyMonth, setHistoryMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   
@@ -600,6 +612,22 @@ export default function App() {
     }
   };
 
+  const handleSetUserId = async () => {
+    if (!newUserId || !user) return;
+    setSyncing(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, { userId: newUserId.toLowerCase() }, { merge: true });
+      setUser({ ...user, userId: newUserId.toLowerCase() });
+      setShowModal(null);
+      showToast('User ID set successfully');
+    } catch (e) {
+      showToast('Failed to set User ID', 'error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleBulkStatusUpdate = async (type: 'Transactions' | 'Outstanding', newStatus: 'Pending' | 'Processed') => {
     const selected = type === 'Transactions' ? selectedTransactions : selectedOutstanding;
     if (selected.size === 0) return;
@@ -795,15 +823,16 @@ export default function App() {
   return (
     <div className="app-wrapper">
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-white/5 shadow-xl">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[var(--bg)]/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-2">
           <button 
-            className="text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="text-[var(--text)] p-2 hover:bg-[var(--surface)] rounded-lg transition-colors"
             onClick={() => setMobileSidebarOpen(true)}
           >
-            <Menu size={24} />
+            <Menu size={20} />
           </button>
-          <img src="/logo.png" alt="Expense Log Pro" className="h-10 w-auto object-contain drop-shadow-md" />
+          <img src="/logo.png" alt="Logo" className="h-8 w-auto object-contain" />
+          <span className="font-bold text-sm text-[var(--text)]">Expense Log Pro</span>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -886,7 +915,7 @@ export default function App() {
                 className="flex-1 btn btn-ghost h-12 font-semibold"
                 onClick={() => setIsUpgradeModalOpen(false)}
               >
-                Maybe Later
+                May be later
               </button>
               <button 
                 className="flex-[1.5] btn bg-amber-400 hover:bg-amber-500 text-slate-950 h-12 font-bold shadow-lg shadow-amber-400/20 rounded-xl flex items-center justify-center gap-2 group"
@@ -917,99 +946,60 @@ export default function App() {
       </div>
 
       {/* Sidebar */}
-      <aside className={cn("sidebar", sidebarCollapsed && "collapsed", mobileSidebarOpen && "open")}>
-        <div className="md:flex hidden px-6 py-4 items-center justify-center border-b border-white/5 flex-col gap-3">
-          <img 
-            src="/logo.png" 
-            alt="Expense Log Pro" 
-            className={cn("transition-all duration-300 object-contain drop-shadow-lg", sidebarCollapsed ? "w-10 h-10" : "w-16 h-16")} 
-          />
-          {!sidebarCollapsed && (
-            <div className={cn(
-              "flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border",
-              userPlan === 'premium' 
-                ? "bg-amber-400/10 text-amber-400 border-amber-400/20" 
-                : "bg-blue-400/10 text-blue-400 border-blue-400/20"
-            )}>
-              {userPlan === 'premium' ? <Crown size={12} /> : <Zap size={12} />}
-              {userPlan} plan
-            </div>
-          )}
+      <aside className={cn("sidebar", mobileSidebarOpen && "open")}>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <Landmark size={24} />
+          </div>
+          <span className="sidebar-brand">Expense Log Pro</span>
         </div>
+
+        <div className={cn("plan-badge", userPlan === 'premium' && "premium")}>
+          {userPlan === 'premium' ? <Crown size={14} /> : <Zap size={14} />}
+          {userPlan} plan
+        </div>
+
         <nav className="nav-container">
-          <NavItem 
-            active={activePage === 'dashboard'} 
-            onClick={() => { setActivePage('dashboard'); setMobileSidebarOpen(false); }} 
-            icon={<LayoutDashboard size={18} />}
-            label="Dashboard" 
-            collapsed={sidebarCollapsed && !mobileSidebarOpen}
-          />
-          <NavItem 
-            active={activePage === 'transactions'} 
-            onClick={() => { setActivePage('transactions'); setMobileSidebarOpen(false); }} 
-            icon={<ArrowRightLeft size={18} />}
-            label="Transactions" 
-            collapsed={sidebarCollapsed && !mobileSidebarOpen}
-          />
-          <NavItem 
-            active={activePage === 'outstanding'} 
-            onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} 
-            icon={<Clock size={18} />}
-            label="Outstanding" 
-            collapsed={sidebarCollapsed && !mobileSidebarOpen}
-          />
-          <NavItem 
-            active={activePage === 'timeline'} 
-            onClick={() => { setActivePage('timeline'); setMobileSidebarOpen(false); }} 
-            icon={<BarChart3 size={18} />}
-            label="Monthly" 
-            collapsed={sidebarCollapsed && !mobileSidebarOpen}
-          />
-          <NavItem 
-            active={activePage === 'accounts'} 
-            onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} 
-            icon={<Landmark size={18} />}
-            label="Accounts" 
-            collapsed={sidebarCollapsed && !mobileSidebarOpen}
-          />
+          <NavItem active={activePage === 'dashboard'} onClick={() => { setActivePage('dashboard'); setMobileSidebarOpen(false); }} icon={<LayoutDashboard size={20} />} label="Dashboard" collapsed={false} />
+          <NavItem active={activePage === 'transactions'} onClick={() => { setActivePage('transactions'); setMobileSidebarOpen(false); }} icon={<ArrowRightLeft size={20} />} label="Transactions" collapsed={false} />
+          <NavItem active={activePage === 'outstanding'} onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} icon={<Clock size={20} />} label="Outstanding" collapsed={false} />
+          <NavItem active={activePage === 'monthly'} onClick={() => { setActivePage('monthly'); setMobileSidebarOpen(false); }} icon={<BarChart3 size={20} />} label="Monthly" collapsed={false} />
+          <NavItem active={activePage === 'accounts'} onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} icon={<Landmark size={20} />} label="Accounts" collapsed={false} />
         </nav>
         
-        <button className="sidebar-toggle" onClick={() => setSidebarCollapsed(!sidebarCollapsed)}>
-          {sidebarCollapsed ? <ChevronRight size={18} /> : <div className="flex items-center gap-3"><ChevronLeft size={18} /><span className="nav-label">Collapse Sidebar</span></div>}
-        </button>
-
-        <div className="sidebar-footer space-y-2">
-          {userPlan === 'free' && (
+        <div className="sidebar-footer">
+          <div className="footer-buttons">
+            {userPlan === 'free' && (
+              <button 
+                onClick={() => setIsUpgradeModalOpen(true)}
+                className="footer-btn upgrade"
+              >
+                <Crown size={18} />
+                Upgrade to Pro
+              </button>
+            )}
+            
             <button 
-              className="flex items-center gap-3 w-full text-amber-400 hover:brightness-110 transition-colors p-2 rounded-lg bg-amber-400/10 border border-amber-400/20 group"
-              onClick={() => setIsUpgradeModalOpen(true)}
-              title="Upgrade to Premium"
+              onClick={() => setIsDark(!isDark)}
+              className="footer-btn"
             >
-              <Crown size={18} className="group-hover:scale-110 transition-transform" />
-              {!sidebarCollapsed && <span className="font-bold text-sm">Upgrade to Pro</span>}
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
-          )}
-          <button 
-            className="flex items-center gap-3 w-full text-muted hover:text-text transition-colors p-2 rounded-lg hover:bg-surface"
-            onClick={() => setIsDark(!isDark)}
-            title="Toggle Theme"
-          >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-            {!sidebarCollapsed && <span className="font-semibold text-sm">{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
-          </button>
-          <button 
-            className="flex items-center gap-3 w-full text-[var(--expense)] hover:brightness-110 transition-colors p-2 rounded-lg hover:bg-[var(--expense-light)]"
-            onClick={() => signOut(auth)}
-            title="Sign Out"
-          >
-            <LogOut size={18} />
-            {!sidebarCollapsed && <span className="font-semibold text-sm">Sign Out</span>}
-          </button>
+
+            <button 
+              onClick={() => signOut(auth)}
+              className="footer-btn signout"
+            >
+              <LogOut size={18} />
+              Sign Out
+            </button>
+          </div>
         </div>
       </aside>
 
-      <main className="main-content flex flex-col items-center">
-        <div className="w-full max-w-5xl px-4 md:px-8">
+      <main className="main-content">
+        <div className="w-full max-w-6xl mx-auto">
         
         {/* Dashboard */}
         <section className={cn("page-container", activePage === 'dashboard' && "active")}>
@@ -1078,7 +1068,7 @@ export default function App() {
               <div className="flex gap-1 items-center">
                 {/* Desktop Only Add Entry */}
                 <button 
-                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3 h-9" 
+                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
                   onClick={() => { 
                     setEditId(null); 
                     setFormData({
@@ -1103,7 +1093,7 @@ export default function App() {
 
                 {!isEditingTransactions && (
                   <button
-                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
                     onClick={() => {
                       setIsEditingTransactions(true);
                       setSelectedTransactions(new Set());
@@ -1149,14 +1139,14 @@ export default function App() {
                   Pending
                 </button>
                 <button 
-                  className="flex-1 btn btn-sm bg-red-600 hover:bg-red-700 text-white h-9 font-bold rounded-xl border-0 shadow-sm"
+                  className="flex-1 btn btn-sm bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkDelete('Transactions')}
                   disabled={selectedTransactions.size === 0 || syncing}
                 >
                   Delete
                 </button>
                 <button 
-                  className="flex-1 btn btn-sm btn-ghost text-muted h-9 font-semibold rounded-xl hover:bg-surface/50"
+                  className="flex-1 btn btn-sm btn-ghost text-muted font-semibold rounded-xl hover:bg-surface/50"
                   onClick={() => {
                     setIsEditingTransactions(false);
                     setSelectedTransactions(new Set());
@@ -1174,7 +1164,7 @@ export default function App() {
                   <div className="relative w-full transition-all">
                     <input 
                       id="transaction-search-input"
-                      className="search-box w-full px-4 h-9" 
+                      className="search-box w-full px-4" 
                       type="text" 
                       placeholder="Search transactions..." 
                       value={search}
@@ -1205,7 +1195,7 @@ export default function App() {
                       <option value="">Accounts</option>
                       {ACCOUNTS_LIST.map(a => <option key={a}>{a}</option>)}
                     </select>
-                    <select id="filter-timeline" className="filter-select flex-1 h-9 min-w-[120px]" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
+                    <select id="filter-timeline" className="filter-select flex-1 min-w-[120px]" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
                       <option value="">Timeline</option>
                       {past10Months.map(m => (
                         <option key={m.value} value={m.value}>{m.label}</option>
@@ -1214,7 +1204,7 @@ export default function App() {
                     {(filterCat || filterSubCat || filterAcc || filterMonth) && (
                       <button 
                         id="clear-filters-btn"
-                        className="btn btn-ghost btn-sm min-w-[36px] h-9 flex items-center justify-center text-accent bg-accent/5" 
+                        className="btn btn-ghost btn-sm min-w-[36px] flex items-center justify-center text-accent bg-accent/5" 
                         onClick={() => { setFilterCat(''); setFilterSubCat(''); setFilterAcc(''); setFilterMonth(''); }}
                         title="Clear Filters"
                       >
@@ -1307,7 +1297,7 @@ export default function App() {
               <div className="flex gap-1 items-center">
                 {/* Desktop Only Add Entry */}
                 <button 
-                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3 h-9" 
+                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
                   onClick={() => {
                     setEditId(null);
                     setFormData({
@@ -1332,7 +1322,7 @@ export default function App() {
 
                 {!isEditingOutstanding && (
                   <button
-                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 h-9 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                    className="flex btn btn-sm items-center justify-center min-w-[36px] w-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
                     onClick={() => {
                       setIsEditingOutstanding(true);
                       setSelectedOutstanding(new Set());
@@ -1344,7 +1334,7 @@ export default function App() {
                 )}
 
                 <button 
-                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3 h-9", (showOutFilters || showOutSearch) && "bg-accent/10 text-accent")} 
+                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3", (showOutFilters || showOutSearch) && "bg-accent/10 text-accent")} 
                   onClick={() => {
                     setShowOutFilters(!showOutFilters);
                     setShowOutSearch(!showOutFilters);
@@ -1360,21 +1350,21 @@ export default function App() {
             {isEditingOutstanding && (
               <div className="w-full flex items-center justify-center gap-2 p-2 bg-surface/50 rounded-xl md:bg-transparent md:p-0 animate-in fade-in slide-in-from-top-2">
                 <button 
-                  className="flex-1 btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white h-9 font-bold rounded-xl border-0 shadow-sm"
+                  className="flex-1 btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkStatusUpdate('Outstanding', 'Processed')}
                   disabled={selectedOutstanding.size === 0 || syncing}
                 >
                   Processed
                 </button>
                 <button 
-                  className="flex-1 btn btn-sm bg-red-600 hover:bg-red-700 text-white h-9 font-bold rounded-xl border-0 shadow-sm"
+                  className="flex-1 btn btn-sm bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkDelete('Outstanding')}
                   disabled={selectedOutstanding.size === 0 || syncing}
                 >
                   Delete
                 </button>
                 <button 
-                  className="flex-1 btn btn-sm btn-ghost text-muted h-9 font-semibold rounded-xl hover:bg-surface/50"
+                  className="flex-1 btn btn-sm btn-ghost text-muted font-semibold rounded-xl hover:bg-surface/50"
                   onClick={() => {
                     setIsEditingOutstanding(false);
                     setSelectedOutstanding(new Set());
@@ -1393,7 +1383,7 @@ export default function App() {
                   <div className="relative w-full transition-all">
                     <input 
                       id="outstanding-search-input"
-                      className="search-box w-full px-4 h-9" 
+                      className="search-box w-full px-4" 
                       type="text" 
                       placeholder="Search outstanding..." 
                       value={outSearch}
@@ -1432,7 +1422,7 @@ export default function App() {
                     </select>
                     {(outFilterState || outFilterMonth || outFilterCat || outFilterSubCat) && (
                       <button 
-                        className="btn btn-ghost btn-sm min-w-[36px] h-9 flex items-center justify-center text-accent bg-accent/5" 
+                        className="btn btn-ghost btn-sm min-w-[36px] flex items-center justify-center text-accent bg-accent/5" 
                         onClick={() => { setOutFilterState(''); setOutFilterMonth(''); setOutFilterCat(''); setOutFilterSubCat(''); }}
                         title="Clear Filters"
                       >
@@ -1502,7 +1492,7 @@ export default function App() {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className={cn(
-                          "text-[9px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider",
+                          "text-[11px] px-4 py-2 rounded-full font-bold uppercase tracking-wider block w-fit mx-auto",
                           (r as any).State === 'Payable' ? "text-green-600 bg-green-100" : "text-red-600 bg-red-100"
                         )}>
                           {(r as any).State || 'Payable'}
@@ -1591,13 +1581,13 @@ export default function App() {
                 <div className="page-sub">Bank accounts & credit cards</div>
               </div>
               <div className="flex gap-2 items-center">
-                <select className="filter-select h-9 min-w-[120px]" value={accFilterMonth} onChange={e => setAccFilterMonth(e.target.value)}>
+                <select className="filter-select min-w-[120px]" value={accFilterMonth} onChange={e => setAccFilterMonth(e.target.value)}>
                   {past10Months.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
                 </select>
               <button 
-                className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3 h-9" 
+                className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
                 onClick={() => { 
                   setEditId(null); 
                   setFormData({
@@ -1615,7 +1605,7 @@ export default function App() {
               </button>
               {!isEditingAccounts && (
                 <button
-                  className="flex btn items-center justify-center w-9 h-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
+                  className="flex btn items-center justify-center w-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
                   onClick={() => setIsEditingAccounts(true)}
                   title="Edit Accounts"
                 >
@@ -1709,11 +1699,43 @@ export default function App() {
         <div className="modal-overlay open">
           <div className="modal-content">
             <div className="flex justify-between items-center mb-6">
-              <div className="modal-title m-0">{showModal === 'account-history' ? `${selectedAccount} History` : `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}</div>
-              <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={20} /></button>
+              <div className="modal-title m-0">
+                {showModal === 'account-history' ? `${selectedAccount} History` : 
+                 showModal === 'set-userid' ? 'Set Your User ID' :
+                 `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}
+              </div>
+              {showModal !== 'set-userid' && (
+                <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={20} /></button>
+              )}
             </div>
             
-            {showModal === 'account' ? (
+            {showModal === 'set-userid' ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted leading-relaxed">
+                  Welcome! Please choose a unique User ID to complete your profile. This ID will represent you in the Expense Log Pro system.
+                </p>
+                <div className="form-group">
+                  <label className="form-label">User ID</label>
+                  <div className="relative">
+                    <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" size={18} />
+                    <input 
+                      className="form-input pl-12" 
+                      placeholder="e.g. johndoe_24" 
+                      value={newUserId} 
+                      onChange={e => setNewUserId(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} 
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted mt-2">Only letters, numbers, and underscores allowed.</p>
+                </div>
+                <button 
+                  className="w-full btn btn-primary h-12 mt-2" 
+                  onClick={handleSetUserId}
+                  disabled={!newUserId || syncing}
+                >
+                  {syncing ? 'Saving...' : 'Set User ID'}
+                </button>
+              </div>
+            ) : showModal === 'account' ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="form-group">
@@ -1942,10 +1964,16 @@ export default function App() {
 
 function NavItem({ active, onClick, icon, label, collapsed }: { active: boolean; onClick: () => void; icon: ReactNode; label: string; collapsed: boolean }) {
   return (
-    <div className={cn("nav-item", active && "active")} onClick={onClick} title={collapsed ? label : undefined}>
-      <span className="nav-icon">{icon}</span>
+    <motion.div 
+      whileHover={{ x: 4 }}
+      whileTap={{ scale: 0.98 }}
+      className={cn("nav-item", active && "active")} 
+      onClick={onClick} 
+      title={collapsed ? label : undefined}
+    >
+      <span className="nav-icon transition-transform duration-300">{icon}</span>
       <span className="nav-label">{label}</span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -1975,21 +2003,21 @@ const chartOptions = {
   plugins: {
     legend: { display: false },
     tooltip: { 
-      bodyFont: { family: 'Syne' },
+      bodyFont: { family: 'Inter' },
       padding: 12,
       backgroundColor: '#0f172a',
-      titleFont: { family: 'Syne', weight: 'bold' as const },
+      titleFont: { family: 'Inter', weight: 'bold' as const },
       borderColor: 'rgba(255,255,255,0.1)',
       borderWidth: 1
     }
   },
   scales: {
     x: { 
-      ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+      ticks: { color: '#64748b', font: { family: 'Inter', size: 10 } },
       grid: { display: false }
     },
     y: { 
-      ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 }, callback: (v: any) => '₹' + v },
+      ticks: { color: '#64748b', font: { family: 'Inter', size: 10 }, callback: (v: any) => '₹' + v },
       grid: { color: 'rgba(100,116,139,0.1)' }
     }
   }
@@ -2001,7 +2029,7 @@ const donutOptions = {
   plugins: {
     legend: { 
       position: 'bottom' as const,
-      labels: { color: '#64748b', font: { family: 'Syne', size: 10 }, padding: 16, usePointStyle: true } 
+      labels: { color: '#64748b', font: { family: 'Inter', size: 10 }, padding: 16, usePointStyle: true } 
     }
   },
   cutout: '75%'
