@@ -856,11 +856,11 @@ export default function App() {
             className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
             onClick={() => setMobileSidebarOpen(true)}
           >
-            <Menu size={18} />
+            <Menu size={16} />
           </button>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 mobile-header-logo">
-              <Landmark size={18} />
+              <Landmark size={16} />
             </div>
             <span className="font-bold text-sm text-[var(--text)] mobile-header-text">Expense Log Pro</span>
           </div>
@@ -869,7 +869,7 @@ export default function App() {
           className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
           onClick={() => setIsDark(!isDark)}
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </header>
 
@@ -881,10 +881,10 @@ export default function App() {
 
       {/* Custom Confirmation Modal */}
       <div className={cn("modal-overlay flex items-center justify-center p-4", isDeleting && "open")}>
-        <div className="modal-content max-w-[400px] w-full p-6 animate-in fade-in zoom-in duration-200">
+        <div className="modal-content max-w-[400px] w-full p-5 animate-in fade-in zoom-in duration-200">
           <div className="flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-              <Trash2 size={24} />
+              <Trash2 size={20} />
             </div>
             <h3 className="text-lg font-bold mb-2 text-text">Confirm Delete</h3>
             <p className="text-muted text-sm mb-6">
@@ -911,12 +911,12 @@ export default function App() {
 
       {/* Upgrade Modal */}
       <div className={cn("modal-overlay flex items-center justify-center p-4", isUpgradeModalOpen && "open")}>
-        <div className="modal-content max-w-[450px] w-full p-8 animate-in fade-in zoom-in duration-300 relative overflow-hidden">
+        <div className="modal-content max-w-[450px] w-full p-6 animate-in fade-in zoom-in duration-300 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500"></div>
           
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 bg-amber-400/20 text-amber-400 rounded-2xl flex items-center justify-center mb-6 shadow-glow-amber">
-              <Crown size={32} />
+              <Crown size={28} />
             </div>
             
             <h3 className="text-2xl font-bold mb-2 text-text">Upgrade to Premium</h3>
@@ -963,7 +963,7 @@ export default function App() {
                   }
                 }}
               >
-                Go Premium <ArrowRightLeft size={18} className="group-hover:translate-x-1 transition-transform" />
+                Go Premium <ArrowRightLeft size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
             
@@ -978,22 +978,22 @@ export default function App() {
       <aside className={cn("sidebar", mobileSidebarOpen && "open")}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <Landmark size={24} />
+            <Landmark size={20} />
           </div>
           <span className="sidebar-brand">Expense Log Pro</span>
         </div>
 
         <div className={cn("plan-badge", userPlan === 'premium' && "premium")}>
-          {userPlan === 'premium' ? <Crown size={14} /> : <Zap size={14} />}
+          {userPlan === 'premium' ? <Crown size={12} /> : <Zap size={12} />}
           {userPlan} plan
         </div>
 
         <nav className="nav-container">
-          <NavItem active={activePage === 'dashboard'} onClick={() => { setActivePage('dashboard'); setMobileSidebarOpen(false); }} icon={<LayoutDashboard size={20} />} label="Dashboard" collapsed={false} />
-          <NavItem active={activePage === 'transactions'} onClick={() => { setActivePage('transactions'); setMobileSidebarOpen(false); }} icon={<ArrowRightLeft size={20} />} label="Transactions" collapsed={false} />
-          <NavItem active={activePage === 'outstanding'} onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} icon={<Clock size={20} />} label="Outstanding" collapsed={false} />
-          <NavItem active={activePage === 'monthly'} onClick={() => { setActivePage('monthly'); setMobileSidebarOpen(false); }} icon={<BarChart3 size={20} />} label="Monthly" collapsed={false} />
-          <NavItem active={activePage === 'accounts'} onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} icon={<Landmark size={20} />} label="Accounts" collapsed={false} />
+          <NavItem active={activePage === 'dashboard'} onClick={() => { setActivePage('dashboard'); setMobileSidebarOpen(false); }} icon={<LayoutDashboard size={18} />} label="Dashboard" collapsed={false} />
+          <NavItem active={activePage === 'transactions'} onClick={() => { setActivePage('transactions'); setMobileSidebarOpen(false); }} icon={<ArrowRightLeft size={18} />} label="Transactions" collapsed={false} />
+          <NavItem active={activePage === 'outstanding'} onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} icon={<Clock size={18} />} label="Outstanding" collapsed={false} />
+          <NavItem active={activePage === 'monthly'} onClick={() => { setActivePage('monthly'); setMobileSidebarOpen(false); }} icon={<BarChart3 size={18} />} label="Monthly" collapsed={false} />
+          <NavItem active={activePage === 'accounts'} onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} icon={<Landmark size={18} />} label="Accounts" collapsed={false} />
         </nav>
         
         <div className="sidebar-footer">
@@ -1003,7 +1003,7 @@ export default function App() {
                 onClick={() => setIsUpgradeModalOpen(true)}
                 className="footer-btn upgrade"
               >
-                <Crown size={18} />
+                <Crown size={16} />
                 Upgrade to Pro
               </button>
             )}
@@ -1012,7 +1012,7 @@ export default function App() {
               onClick={() => setIsDark(!isDark)}
               className="footer-btn"
             >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
               {isDark ? 'Light Mode' : 'Dark Mode'}
             </button>
 
@@ -1020,7 +1020,7 @@ export default function App() {
               onClick={() => signOut(auth)}
               className="footer-btn signout"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
               Sign Out
             </button>
           </div>
@@ -1057,16 +1057,16 @@ export default function App() {
               }}
               title="Add Entry"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               <span className="hidden md:inline">Add Entry</span>
             </button>
           </div>
 
           <div className="stats-grid">
-            <StatCard type="income" label="Income" value={dashboardStats.t.Income} count={dashboardStats.c.Income} trend="up" icon={<ArrowDownCircle size={20} />} />
-            <StatCard type="expense" label="Expenses" value={dashboardStats.t.Expenses} count={dashboardStats.c.Expenses} trend="down" icon={<ArrowUpCircle size={20} />} />
-            <StatCard type="credit" label="Credit" value={dashboardStats.t.Credit} count={dashboardStats.c.Credit} trend="up" icon={<CreditCard size={20} />} />
-            <StatCard type="bills" label="Bills" value={dashboardStats.t.Bills} count={dashboardStats.c.Bills} trend="down" icon={<Receipt size={20} />} />
+            <StatCard type="income" label="Income" value={dashboardStats.t.Income} count={dashboardStats.c.Income} trend="up" icon={<ArrowDownCircle size={18} />} />
+            <StatCard type="expense" label="Expenses" value={dashboardStats.t.Expenses} count={dashboardStats.c.Expenses} trend="down" icon={<ArrowUpCircle size={18} />} />
+            <StatCard type="credit" label="Credit" value={dashboardStats.t.Credit} count={dashboardStats.c.Credit} trend="up" icon={<CreditCard size={18} />} />
+            <StatCard type="bills" label="Bills" value={dashboardStats.t.Bills} count={dashboardStats.c.Bills} trend="down" icon={<Receipt size={18} />} />
           </div>
 
           <div className="charts-row">
@@ -1188,7 +1188,7 @@ export default function App() {
           </div>
           <div className="table-card overflow-hidden">
              {(showSearch || showFilters) && (
-               <div id="transaction-toolbar" className="table-toolbar flex flex-col gap-2 p-3 md:p-4 border-b border-border/40 bg-surface/30">
+               <div id="transaction-toolbar" className="table-toolbar flex flex-col gap-1.5 p-2 md:p-3 border-b border-border/40 bg-surface/30">
                 {(showSearch || (showFilters && window.innerWidth < 768)) && (
                   <div className="relative w-full transition-all">
                     <input 
@@ -1411,7 +1411,7 @@ export default function App() {
 
           <div className="table-card overflow-hidden mt-6">
              {(showOutSearch || showOutFilters) && (
-               <div id="outstanding-toolbar" className="table-toolbar flex flex-col gap-2 p-3 md:p-4 border-b border-border/40 bg-surface/30">
+               <div id="outstanding-toolbar" className="table-toolbar flex flex-col gap-1.5 p-2 md:p-3 border-b border-border/40 bg-surface/30">
                 {(showOutSearch || (showOutFilters && window.innerWidth < 768)) && (
                   <div className="relative w-full transition-all">
                     <input 
@@ -1739,7 +1739,7 @@ export default function App() {
                 {showModal === 'account-history' ? `${selectedAccount} History` : 
                   `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}
               </div>
-                <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={20} /></button>
+                <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={18} /></button>
             </div>
             
             {showModal === 'account' ? (
@@ -1931,7 +1931,7 @@ export default function App() {
               }
             }}
           >
-            <Plus size={32} strokeWidth={3} />
+            <Plus size={24} strokeWidth={3} />
           </button>
         )}
         {activePage === 'outstanding' && (
@@ -1954,7 +1954,7 @@ export default function App() {
                 setShowModal('outstanding');
             }}
           >
-            <Plus size={32} strokeWidth={3} />
+            <Plus size={24} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -1991,7 +1991,7 @@ function StatCard({ type, label, value, count, trend, icon }: { type: string; la
         <div className="stat-icon">{icon}</div>
         {trend && (
           <div className={cn("text-[10px] font-bold p-1 rounded-sm", trend === 'up' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500")}>
-            {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+            {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
           </div>
         )}
       </div>
