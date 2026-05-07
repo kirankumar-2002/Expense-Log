@@ -17,7 +17,6 @@ export type Outstanding = FinancialRecord;
 export interface Account {
   id: string;
   name: string;
-  bank: string;
   type: 'Current' | 'Savings' | 'Credit';
   balance: number;
   standardBalance?: number;

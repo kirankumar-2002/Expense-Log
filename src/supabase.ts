@@ -161,7 +161,6 @@ function mapAccountToRow(record: any) {
   return {
     ...(record.id && !String(record.id).startsWith('new_') ? { id: record.id } : {}),
     name: record.name || '',
-    bank: record.bank || '',
     type: record.type || 'Current',
     balance: parseFloat(String(record.balance || 0)),
     standard_balance: parseFloat(String(record.standardBalance || record.standard_balance || 0)),
@@ -177,7 +176,6 @@ export function mapRowToAccount(row: any) {
   return {
     id: String(row.id),
     name: row.name || '',
-    bank: row.bank || '',
     type: row.type || 'Current',
     balance: Number(row.balance) || 0,
     standardBalance: Number(row.standard_balance) || 0,
@@ -185,3 +183,63 @@ export function mapRowToAccount(row: any) {
     Month: row.month || '',
   };
 }
+
+// ---------- Profiles / Users ----------
+
+/**
+ * Syncs a Firebase Auth user profile to the Supabase 'users' table.
+ * Uses upsert logic (merge on firebase_uid conflict).
+ */
+export async function sbSyncProfile(firebaseUser: any, extraData: any = {}) {
+  if (!firebaseUser) {
+    console.error('❌ sbSyncProfile: No firebaseUser provided');
+    return;
+  }
+  console.log('🔄 Syncing user profile to Supabase...', firebaseUser.uid);
+  console.log('👤 Firebase User Info:', { 
+    email: firebaseUser.email, 
+    providers: firebaseUser.providerData?.map((p: any) => p.providerId) 
+  });
+  
+  const providerData = firebaseUser.providerData?.[0] || {};
+  const rawProviderId = providerData.providerId || firebaseUser.providerId || '';
+  
+  const providerName = rawProviderId === 'password' ? 'Email/Password' : 
+                       (rawProviderId === 'google.com' || rawProviderId === 'google') ? 'Google' : 
+                       rawProviderId || 'Unknown';
+
+  const profile = {
+    firebase_uid: firebaseUser.uid,
+    user_id: extraData.userId || firebaseUser.email?.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') || '',
+    email: firebaseUser.email || '',
+    full_name: firebaseUser.displayName || extraData.name || '',
+    role_plan: extraData.plan || 'free',
+    provider: providerName,
+    last_login_at: new Date().toISOString(),
+  };
+
+  try {
+    const res = await fetch(`${REST_URL}/users?on_conflict=firebase_uid`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'Prefer': 'resolution=merge-duplicates,return=representation',
+      },
+      body: JSON.stringify(profile),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('❌ Supabase sync failed:', errorText);
+      throw new Error(`Sync error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log('✅ Supabase profile synced:', data[0]?.email);
+    return data[0];
+  } catch (err) {
+    console.error('❌ Error in sbSyncProfile:', err);
+    throw err;
+  }
+}
+

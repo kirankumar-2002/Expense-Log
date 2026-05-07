@@ -11,6 +11,7 @@ import SignIn from './SignIn';
 import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
+import { sbSyncProfile } from './supabase';
 import { 
   Plus, 
   Trash2, 
@@ -177,6 +178,12 @@ export default function App() {
               const generatedId = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
               await setDoc(userRef, { userId: generatedId }, { merge: true });
               setUser({ ...u, ...data, userId: generatedId });
+              
+              // Sync to Supabase with new userId
+              sbSyncProfile(u, { ...data, userId: generatedId }).catch(console.error);
+            } else {
+              // Sync to Supabase with existing data
+              sbSyncProfile(u, data).catch(console.error);
             }
           } else {
             // First time login (likely Google) - initialize basic profile
@@ -191,11 +198,17 @@ export default function App() {
             await setDoc(userRef, newUser);
             setUser({ ...u, ...newUser });
             setUserPlan('free');
+            
+            console.log('✅ New Google user created in Firestore, syncing to Supabase...');
+            sbSyncProfile(u, newUser).catch(console.error);
           }
         } catch (err) {
-          console.error("Error fetching user data:", err);
+          console.error("❌ Error fetching user data:", err);
           setUser(u);
           setUserPlan('free');
+          
+          console.log('⚠️ Fallback sync triggering...');
+          sbSyncProfile(u).catch(console.error);
         }
       } else {
         setUser(null);
@@ -205,6 +218,13 @@ export default function App() {
     });
     return unsubscribe;
   }, []);
+
+  // Force sync to Supabase when user state is first established (handles already-logged-in cases)
+  useEffect(() => {
+    if (user && !isAuthLoading) {
+      sbSyncProfile(auth.currentUser, user).catch(console.error);
+    }
+  }, [user, isAuthLoading]);
 
 
   const [syncing, setSyncing] = useState(false);
@@ -263,7 +283,6 @@ export default function App() {
     status: 'Pending',
     // Account specific
     name: '',
-    bank: '',
     type: 'Current' as 'Current' | 'Savings' | 'Credit',
     balance: '',
     standardBalance: '',
@@ -621,7 +640,12 @@ export default function App() {
     try {
       const userRef = doc(db, 'users', user.uid);
       await setDoc(userRef, { userId: newUserId.toLowerCase() }, { merge: true });
-      setUser({ ...user, userId: newUserId.toLowerCase() });
+      const updatedUser = { ...user, userId: newUserId.toLowerCase() };
+      setUser(updatedUser);
+      
+      // Sync change to Supabase
+      sbSyncProfile(auth.currentUser, updatedUser).catch(console.error);
+
       setShowModal(null);
       showToast('User ID set successfully');
     } catch (e) {
@@ -1027,7 +1051,7 @@ export default function App() {
                   Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
                   status: 'Pending',
-                  name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                  name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                 });
                 setShowModal('transaction'); 
               }}
@@ -1086,7 +1110,7 @@ export default function App() {
                       Accounts: ACCOUNTS_LIST[0],
                       state: 'Payable',
                       status: 'Pending',
-                      name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                      name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('transaction'); 
                   }}
@@ -1315,7 +1339,7 @@ export default function App() {
                       Accounts: 'Bank of Baroda',
                       state: filterState as any,
                       status: 'Pending',
-                      name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                      name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('outstanding');
                   }}
@@ -1473,7 +1497,7 @@ export default function App() {
                             state: r.State || 'Payable',
                             status: r.Status || 'Pending',
                             Accounts: r.Accounts || 'Bank of Baroda',
-                            name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: ''
+                            name: '', type: 'Current', balance: '', standardBalance: '', month: ''
                           });
                           setShowModal('outstanding');
                         }
@@ -1599,7 +1623,7 @@ export default function App() {
                     ...formData,
                     date: new Date().toISOString().slice(0, 10),
                     amount: '',
-                    name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
+                    name: '', type: 'Current', balance: '', standardBalance: ''
                   });
                   setShowModal('account'); 
                 }}
@@ -1651,7 +1675,6 @@ export default function App() {
                             setFormData({
                               ...formData,
                               name, 
-                              bank: '', 
                               type: name.includes('Money Back') ? 'Credit' : name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings', 
                               balance: String(accToEdit.balance || '0'), 
                               standardBalance: String(accToEdit.standardBalance || '0'), 
