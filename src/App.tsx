@@ -45,7 +45,10 @@ import {
   Receipt,
   CreditCard,
   X,
-  AtSign
+  AtSign,
+  Settings,
+  User,
+  Bell
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -994,6 +997,7 @@ export default function App() {
           <NavItem active={activePage === 'outstanding'} onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} icon={<Clock size={18} />} label="Outstanding" collapsed={false} />
           <NavItem active={activePage === 'monthly'} onClick={() => { setActivePage('monthly'); setMobileSidebarOpen(false); }} icon={<BarChart3 size={18} />} label="Monthly" collapsed={false} />
           <NavItem active={activePage === 'accounts'} onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} icon={<Landmark size={18} />} label="Accounts" collapsed={false} />
+          <NavItem active={activePage === 'settings'} onClick={() => { setActivePage('settings'); setMobileSidebarOpen(false); }} icon={<Settings size={18} />} label="Settings" collapsed={false} />
         </nav>
         
         <div className="sidebar-footer">
@@ -1007,22 +1011,6 @@ export default function App() {
                 Upgrade to Pro
               </button>
             )}
-            
-            <button 
-              onClick={() => setIsDark(!isDark)}
-              className="footer-btn"
-            >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-              {isDark ? 'Light Mode' : 'Dark Mode'}
-            </button>
-
-            <button 
-              onClick={() => signOut(auth)}
-              className="footer-btn signout"
-            >
-              <LogOut size={16} />
-              Sign Out
-            </button>
           </div>
         </div>
       </aside>
@@ -1724,6 +1712,119 @@ export default function App() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Settings */}
+        <section className={cn("page-container", activePage === 'settings' && "active")}>
+          <div className="page-header">
+            <div>
+              <div className="page-title">Settings<span>.</span></div>
+              <div className="page-sub">Manage your profile and preferences</div>
+            </div>
+          </div>
+          <div className="settings-grid">
+            {/* Profile Section */}
+            <div className="settings-card">
+              <div className="settings-section-title">
+                <div className="settings-section-icon"><User size={16} /></div>
+                Profile
+              </div>
+              <div className="profile-info-list">
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Name</span>
+                  <span className="profile-info-value">{user?.name || user?.displayName || 'N/A'}</span>
+                </div>
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Email</span>
+                  <span className="profile-info-value">{user?.email}</span>
+                </div>
+                <div className="profile-info-item">
+                  <span className="profile-info-label">User ID</span>
+                  <div className="flex items-center gap-2">
+                    <span className="profile-info-value font-mono text-[var(--accent)]">@{user?.userId || 'not_set'}</span>
+                    <button 
+                      onClick={() => {
+                        setNewUserId(user?.userId || '');
+                        setShowModal('set-userid');
+                      }}
+                      className="text-[10px] font-bold uppercase tracking-wider text-muted hover:text-[var(--accent)] transition-colors"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Preferences Section */}
+            <div className="settings-card">
+              <div className="settings-section-title">
+                <div className="settings-section-icon"><Zap size={16} /></div>
+                Preferences
+              </div>
+              <div className="space-y-1">
+                <div className="settings-option">
+                  <div className="settings-option-info">
+                    <span className="settings-option-label">Dark Mode</span>
+                    <span className="settings-option-sub">Switch to dark interface theme</span>
+                  </div>
+                  <label className="switch">
+                    <input 
+                      type="checkbox" 
+                      checked={isDark} 
+                      onChange={() => setIsDark(!isDark)} 
+                    />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+                <div className="settings-option">
+                  <div className="settings-option-info">
+                    <span className="settings-option-label">Notifications</span>
+                    <span className="settings-option-sub">Receive alerts for budget limits</span>
+                  </div>
+                  <label className="switch">
+                    <input type="checkbox" defaultChecked />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Account Section */}
+            <div className="settings-card">
+              <div className="settings-section-title">
+                <div className="settings-section-icon"><LogOut size={16} /></div>
+                Account
+              </div>
+              <div className="profile-info-list">
+                <div className="profile-info-item">
+                  <span className="profile-info-label">Plan Type</span>
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-md", userPlan === 'premium' ? "bg-amber-400/10 text-amber-500" : "bg-slate-200 text-slate-500")}>
+                      {userPlan} Plan
+                    </span>
+                    {userPlan === 'free' && (
+                      <button 
+                        onClick={() => setIsUpgradeModalOpen(true)}
+                        className="text-[10px] font-bold uppercase tracking-wider text-amber-500 hover:underline"
+                      >
+                        Upgrade Now
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="sign-out-btn-wrap">
+                <button 
+                  onClick={() => signOut(auth)}
+                  className="btn-signout-full"
+                >
+                  <LogOut size={18} />
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </section>

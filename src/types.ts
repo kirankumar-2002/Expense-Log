@@ -24,4 +24,4 @@ export interface Account {
   Month?: string;
 }
 
-export type PageView = 'dashboard' | 'transactions' | 'outstanding' | 'monthly' | 'accounts';
+export type PageView = 'dashboard' | 'transactions' | 'outstanding' | 'monthly' | 'accounts' | 'settings';
