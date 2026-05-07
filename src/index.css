@@ -247,7 +247,8 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* === Typography === */
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 40px; gap: 20px; }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 40px; gap: 20px; transition: all 0.3s ease; }
+.page-header.editing { gap: 16px; }
 .page-title { 
   font-size: 34px; 
   font-weight: 800; 
@@ -316,8 +317,9 @@ body {
   border-radius: var(--radius-lg); 
   overflow: hidden; 
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02); 
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.table-toolbar { padding: 24px; display: flex; gap: 16px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+.table-toolbar { padding: 24px; display: flex; gap: 16px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; min-height: 80px; }
 .search-box { 
   flex: 1; min-width: 240px; height: 48px; background: var(--surface); 
   border: 2px solid transparent; border-radius: 12px; padding: 0 20px; 
@@ -326,10 +328,32 @@ body {
 .search-box:focus { border-color: var(--accent); background: var(--card); }
 
 .table-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { padding: 16px 24px; text-align: left; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface); }
-td { padding: 16px 24px; font-size: 15px; border-bottom: 1px solid var(--border); color: var(--text); }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { padding: 20px 24px; text-align: left; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--surface); }
+td { 
+  padding: 16px 24px; 
+  font-size: 15px; 
+  border-bottom: 1px solid var(--border); 
+  color: var(--text); 
+  vertical-align: middle;
+}
+
+tr {
+  min-height: 72px;
+  height: 72px;
+}
+
 tr:hover td { background: var(--surface); }
+tr.selected td { background: var(--accent-light) !important; border-bottom-color: var(--accent); }
+tr.editing-mode {
+  min-height: 84px;
+  height: 84px;
+}
+tr.editing-mode td { 
+  cursor: default;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
 
 /* === Buttons === */
 .btn { 
@@ -388,9 +412,9 @@ tr:hover td { background: var(--surface); }
   backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.6); 
   border-radius: var(--radius-lg); 
-  padding: 48px; 
+  padding: 40px; 
   width: 100%; 
-  max-width: 540px; 
+  max-width: 640px; 
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08); 
   max-height: 90vh; 
   overflow-y: auto;
@@ -664,4 +688,63 @@ tr:hover td { background: var(--surface); }
   margin-top: 32px;
   color: #6b7280;
   font-size: 15px;
+}
+.edit-toolbar-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  margin-top: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.edit-toolbar-container button {
+  min-height: 44px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.form-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--surface);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  transition: all 0.2s;
+  outline: none;
+}
+
+.form-input:focus {
+  background: white;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+textarea.form-input {
+  height: auto;
+  padding: 12px 16px;
 }

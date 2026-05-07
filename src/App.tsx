@@ -1159,7 +1159,7 @@ export default function App() {
             </div>
 
             {isEditingTransactions && (
-              <div className="w-full flex items-center justify-center gap-2 p-2 bg-surface/50 rounded-xl md:bg-transparent md:p-0 animate-in fade-in slide-in-from-top-2">
+              <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2">
                 <button 
                   className="flex-1 btn btn-sm bg-yellow-500 hover:bg-yellow-600 text-white h-9 font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkStatusUpdate('Transactions', 'Pending')}
@@ -1257,8 +1257,12 @@ export default function App() {
                 <tbody>
                   {filteredTransactions.map((r, i) => (
                     <tr 
-                      key={`tx-row-${r.ID || i}-${i}`} 
-                      className={cn("cursor-pointer border-b border-border/40 transition-colors", r.ID && selectedTransactions.has(String(r.ID)) ? "bg-accent/5" : "hover:bg-surface/50")}
+                      key={`tx-row-${r.ID || i}`} 
+                      className={cn(
+                        "cursor-pointer border-b border-border/40 transition-colors", 
+                        isEditingTransactions && "editing-mode",
+                        selectedTransactions.has(String(r.ID)) ? "selected" : "hover:bg-surface/50"
+                      )}
                       onClick={() => {
                         const rowId = String(r.ID || '');
                         if (isEditingTransactions && rowId) {
@@ -1377,7 +1381,7 @@ export default function App() {
             </div>
 
             {isEditingOutstanding && (
-              <div className="w-full flex items-center justify-center gap-2 p-2 bg-surface/50 rounded-xl md:bg-transparent md:p-0 animate-in fade-in slide-in-from-top-2">
+              <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2">
                 <button 
                   className="flex-1 btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkStatusUpdate('Outstanding', 'Processed')}
@@ -1476,7 +1480,11 @@ export default function App() {
                   {filteredOutstanding.map((r, i) => (
                     <tr 
                       key={`out-row-${(r as any).ID || i}-${i}`}
-                      className={cn("cursor-pointer border-b border-border/40 transition-colors", (r as any).ID && selectedOutstanding.has(String((r as any).ID)) ? "bg-accent/5" : "hover:bg-surface/50")}
+                      className={cn(
+                        "cursor-pointer border-b border-border/40 transition-colors", 
+                        isEditingOutstanding && "editing-mode",
+                        (r as any).ID && selectedOutstanding.has(String((r as any).ID)) ? "selected" : "hover:bg-surface/50"
+                      )}
                       onClick={() => {
                         const anyR = r as any;
                         const rowId = String(anyR.ID || '');
