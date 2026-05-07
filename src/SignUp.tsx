@@ -5,7 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { Mail, Lock, User, AlertCircle, Command } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const SignUp = ({ onToggle, onSuccess }) => {
+const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,14 +42,15 @@ const SignUp = ({ onToggle, onSuccess }) => {
   };
 
   return (
-    <div className="auth-page">
+    <div className={isModal ? "" : "auth-page"}>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="auth-card"
+        style={isModal ? { background: 'transparent', backdropFilter: 'none', border: 'none', boxShadow: 'none' } : {}}
       >
-        <div className="auth-icon-wrap">
-          <Command size={32} />
+        <div className="auth-logo-wrap">
+          <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
         </div>
 
         <h1 className="auth-title">Join Us</h1>

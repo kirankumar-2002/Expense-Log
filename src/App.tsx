@@ -155,6 +155,8 @@ export default function App() {
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   // Auth Listener
   useEffect(() => {
@@ -216,6 +218,11 @@ export default function App() {
       } else {
         setUser(null);
         setUserPlan('free');
+        setIsPreviewMode(true);
+        // Clear data immediately for preview mode
+        setTransactions([]);
+        setOutstanding([]);
+        setAccounts([]);
       }
       setIsAuthLoading(false);
     });
@@ -226,8 +233,42 @@ export default function App() {
   useEffect(() => {
     if (user && !isAuthLoading) {
       sbSyncProfile(auth.currentUser, user).catch(console.error);
+      setIsPreviewMode(false);
+      setShowAuthModal(false);
     }
   }, [user, isAuthLoading]);
+
+  // Preview Mode Timer (10 seconds)
+  useEffect(() => {
+    if (isPreviewMode && !showAuthModal) {
+      const timer = setTimeout(() => {
+        setShowAuthModal(true);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [isPreviewMode, showAuthModal]);
+
+  useEffect(() => {
+    if (!isPreviewMode) return;
+
+    const handleGlobalClick = (e: MouseEvent) => {
+      // If modal is already open, don't intercept further (let user interact with modal)
+      if (showAuthModal) return;
+
+      const target = e.target as HTMLElement;
+      // Don't intercept clicks inside the modal content
+      if (target.closest('.modal-content')) return;
+      
+      console.log('Preview interaction intercepted via window listener');
+      // We don't necessarily want to preventDefault on everything (like scrolling),
+      // but the user said "Show the Sign In interface". 
+      // If we show it, it will cover the screen anyway.
+      setShowAuthModal(true);
+    };
+
+    window.addEventListener('click', handleGlobalClick, true);
+    return () => window.removeEventListener('click', handleGlobalClick, true);
+  }, [isPreviewMode, showAuthModal]);
 
 
   const [syncing, setSyncing] = useState(false);
@@ -358,10 +399,26 @@ export default function App() {
   }, [formData.subCategory]);
 
   useEffect(() => {
-    loadAllData();
-  }, []);
+    if (user) {
+      loadAllData();
+    } else if (isPreviewMode) {
+      // Data is already cleared in auth listener, but safety check
+      if (transactions.length > 0) setTransactions([]);
+      if (outstanding.length > 0) setOutstanding([]);
+      if (accounts.length > 0) setAccounts([]);
+      setLoading(false);
+    }
+  }, [user, isPreviewMode]);
 
   const loadAllData = async (showOverlay = true) => {
+    if (!user) {
+      setTransactions([]);
+      setOutstanding([]);
+      setAccounts([]);
+      setLoading(false);
+      setSyncing(false);
+      return;
+    }
     if (showOverlay) setLoading(true);
     setSyncing(true);
     try {
@@ -815,7 +872,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
+  if (!user && !isPreviewMode) {
     return authMode === 'signin' ? (
       <SignIn 
         onToggle={() => {
@@ -851,7 +908,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-wrapper">
+    <div className={cn("app-wrapper", isPreviewMode && "isPreviewMode", showAuthModal && "modal-open")}>
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[var(--bg)]/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-3">
@@ -988,7 +1045,7 @@ export default function App() {
 
         <div className={cn("plan-badge", userPlan === 'premium' && "premium")}>
           {userPlan === 'premium' ? <Crown size={12} /> : <Zap size={12} />}
-          {userPlan} plan
+          {isPreviewMode ? 'Preview Mode' : `${userPlan} plan`}
         </div>
 
         <nav className="nav-container">
@@ -1818,11 +1875,11 @@ export default function App() {
               </div>
               <div className="sign-out-btn-wrap">
                 <button 
-                  onClick={() => signOut(auth)}
+                  onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}
                   className="btn-signout-full"
                 >
-                  <LogOut size={18} />
-                  Sign Out
+                  {isPreviewMode ? <User size={18} /> : <LogOut size={18} />}
+                  {isPreviewMode ? 'Sign In / Sign Up' : 'Sign Out'}
                 </button>
               </div>
             </div>
@@ -2058,6 +2115,36 @@ export default function App() {
             <Plus size={24} strokeWidth={3} />
           </button>
         )}
+      </div>
+
+      {/* Auth Modal (Preview Mode) */}
+      <div className={cn("modal-overlay auth-modal-overlay flex items-center justify-center p-4", showAuthModal && "open")}>
+        <div className="auth-modal-content max-w-[380px] w-full animate-in fade-in zoom-in duration-300 relative">
+          {authMode === 'signin' ? (
+            <SignIn 
+              onToggle={() => {
+                setAuthMode('signup');
+                setSignupSuccess(false);
+              }} 
+              prefilledEmail={prefilledEmail}
+              initialMessage={signupSuccess ? "Your account has been created. Please check your email and verify your address before logging in." : ""}
+              isModal={true}
+            />
+          ) : (
+            <SignUp 
+              onToggle={() => {
+                setAuthMode('signin');
+                setSignupSuccess(false);
+              }} 
+              onSuccess={(email: string) => {
+                setPrefilledEmail(email);
+                setSignupSuccess(true);
+                setAuthMode('signin');
+              }}
+              isModal={true}
+            />
+          )}
+        </div>
       </div>
 
       {/* Toast */}

@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { Mail, Lock, AlertCircle, Command, Chrome } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
+const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '', isModal = false }) => {
   const [email, setEmail] = useState(prefilledEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -43,14 +43,15 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '' }) => {
   };
 
   return (
-    <div className="auth-page">
+    <div className={isModal ? "" : "auth-page"}>
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="auth-card"
+        style={isModal ? { background: 'transparent', backdropFilter: 'none', border: 'none', boxShadow: 'none' } : {}}
       >
-        <div className="auth-icon-wrap">
-          <Command size={32} />
+        <div className="auth-logo-wrap">
+          <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
         </div>
 
         <h1 className="auth-title">Welcome Back</h1>
