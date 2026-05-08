@@ -116,9 +116,7 @@ body {
   transition: transform 0.3s ease;
 }
 
-.sidebar-logo:hover {
-  transform: scale(1.1);
-}
+/* Removed hover effect */
 
 .sidebar-logo img {
   width: 100%;
@@ -540,9 +538,7 @@ tr.editing-mode td {
   transition: transform 0.3s ease;
 }
 
-.auth-logo:hover {
-  transform: scale(1.02);
-}
+/* Removed hover effect */
 
 .auth-title {
   font-family: 'Syne', sans-serif;
