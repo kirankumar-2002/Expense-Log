@@ -48,7 +48,15 @@ import {
   AtSign,
   Settings,
   User,
-  Bell
+  Bell,
+  Shield,
+  HelpCircle,
+  Info,
+  Wallet,
+  Smartphone,
+  Globe,
+  Languages,
+  ArrowRight
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -139,7 +147,57 @@ const fmtDate = (d: string) => {
   }
 };
 
+
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
+
+function SettingsInternalNavItem({ active, onClick, icon, label, badge }: { active: boolean, onClick: () => void, icon: ReactNode, label: string, badge?: string }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn("settings-nav-item-internal", active && "active")}
+    >
+      <div className="nav-icon-wrap">
+        <span className="nav-icon">{icon}</span>
+        <span>{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {badge && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 uppercase tracking-wider">{badge}</span>}
+        <ChevronRight size={14} className="chevron" />
+      </div>
+    </button>
+  );
+}
+
+function SettingsItemLink({ icon, label, value }: { icon: ReactNode, label: string, value: string }) {
+  return (
+    <div className="settings-option py-6 group cursor-pointer">
+      <div className="settings-nav-item-internal border-none p-0 w-full hover:bg-transparent">
+        <div className="nav-icon-wrap">
+          <span className="nav-icon opacity-60 group-hover:opacity-100 transition-opacity">{icon}</span>
+          <div className="flex flex-col">
+            <span className="settings-option-label text-base">{label}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-indigo-600">{value}</span>
+          <ChevronRight size={16} className="chevron" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AboutLink({ icon, label }: { icon: ReactNode, label: string }) {
+  return (
+    <div className="about-link-item">
+      <div className="about-link-info">
+        <span className="about-link-icon">{icon}</span>
+        <span>{label}</span>
+      </div>
+      <ChevronRight size={16} className="chevron" />
+    </div>
+  );
+}
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -273,6 +331,7 @@ export default function App() {
 
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'subscription' | 'wallet' | 'preferences' | 'help' | 'about'>('profile');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
@@ -925,12 +984,6 @@ export default function App() {
             <span className="font-bold text-sm text-[var(--text)] mobile-header-text">Expense Log Pro</span>
           </div>
         </div>
-        <button 
-          className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
-          onClick={() => setIsDark(!isDark)}
-        >
-          {isDark ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
       </header>
 
       {/* Sidebar Overlay */}
@@ -1773,115 +1826,353 @@ export default function App() {
           </div>
         </section>
 
-        {/* Settings */}
+        {/* Settings / Account */}
         <section className={cn("page-container", activePage === 'settings' && "active")}>
           <div className="page-header">
             <div>
-              <div className="page-title">Settings<span>.</span></div>
-              <div className="page-sub">Manage your profile and preferences</div>
+              <div className="page-title">Account Settings<span>.</span></div>
+              <div className="page-sub">Manage your profile, subscription and app preferences</div>
             </div>
           </div>
-          <div className="settings-grid">
-            {/* Profile Section */}
-            <div className="settings-card">
-              <div className="settings-section-title">
-                <div className="settings-section-icon"><User size={16} /></div>
-                Profile
-              </div>
-              <div className="profile-info-list">
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Name</span>
-                  <span className="profile-info-value">{user?.name || user?.displayName || 'N/A'}</span>
-                </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Email</span>
-                  <span className="profile-info-value">{user?.email}</span>
-                </div>
-                <div className="profile-info-item">
-                  <span className="profile-info-label">User ID</span>
-                  <div className="flex items-center gap-2">
-                    <span className="profile-info-value font-mono text-[var(--accent)]">@{user?.userId || 'not_set'}</span>
-                    <button 
-                      onClick={() => {
-                        setNewUserId(user?.userId || '');
-                        setShowModal('set-userid');
-                      }}
-                      className="text-[10px] font-bold uppercase tracking-wider text-muted hover:text-[var(--accent)] transition-colors"
-                    >
-                      Change
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Preferences Section */}
-            <div className="settings-card">
-              <div className="settings-section-title">
-                <div className="settings-section-icon"><Zap size={16} /></div>
-                Preferences
-              </div>
-              <div className="space-y-1">
-                <div className="settings-option">
-                  <div className="settings-option-info">
-                    <span className="settings-option-label">Dark Mode</span>
-                    <span className="settings-option-sub">Switch to dark interface theme</span>
-                  </div>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={isDark} 
-                      onChange={() => setIsDark(!isDark)} 
-                    />
-                    <span className="slider"></span>
-                  </label>
+          <div className="settings-layout">
+            {/* Internal Sidebar */}
+            <aside className="settings-sidebar-internal">
+              <div className="settings-sidebar-profile">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
+                  {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <div className="settings-option">
-                  <div className="settings-option-info">
-                    <span className="settings-option-label">Notifications</span>
-                    <span className="settings-option-sub">Receive alerts for budget limits</span>
-                  </div>
-                  <label className="switch">
-                    <input type="checkbox" defaultChecked />
-                    <span className="slider"></span>
-                  </label>
+                <div className="settings-sidebar-profile-info">
+                  <span className="settings-sidebar-profile-name">{user?.name || user?.displayName || 'User'}</span>
+                  <span className="settings-sidebar-profile-email">{user?.email}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Account Section */}
-            <div className="settings-card">
-              <div className="settings-section-title">
-                <div className="settings-section-icon"><LogOut size={16} /></div>
-                Account
+              <div className="settings-nav-group">
+                <div className="settings-nav-group-title">Account</div>
+                <SettingsInternalNavItem active={settingsTab === 'profile'} onClick={() => setSettingsTab('profile')} icon={<User size={18} />} label="Profile" />
+                <SettingsInternalNavItem active={settingsTab === 'subscription'} onClick={() => setSettingsTab('subscription')} icon={<Crown size={18} />} label="Subscription" badge={userPlan === 'premium' ? "Pro" : "Free"} />
+                <SettingsInternalNavItem active={settingsTab === 'wallet'} onClick={() => setSettingsTab('wallet')} icon={<Wallet size={18} />} label="Wallet" />
               </div>
-              <div className="profile-info-list">
-                <div className="profile-info-item">
-                  <span className="profile-info-label">Plan Type</span>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-md", userPlan === 'premium' ? "bg-amber-400/10 text-amber-500" : "bg-slate-200 text-slate-500")}>
-                      {userPlan} Plan
-                    </span>
-                    {userPlan === 'free' && (
-                      <button 
-                        onClick={() => setIsUpgradeModalOpen(true)}
-                        className="text-[10px] font-bold uppercase tracking-wider text-amber-500 hover:underline"
-                      >
-                        Upgrade Now
-                      </button>
-                    )}
-                  </div>
-                </div>
+
+              <div className="settings-nav-group">
+                <div className="settings-nav-group-title">App</div>
+                <SettingsInternalNavItem active={settingsTab === 'preferences'} onClick={() => setSettingsTab('preferences')} icon={<Zap size={18} />} label="Preferences" />
+                <SettingsInternalNavItem active={settingsTab === 'help'} onClick={() => setSettingsTab('help')} icon={<HelpCircle size={18} />} label="Help" />
+                <SettingsInternalNavItem active={settingsTab === 'about'} onClick={() => setSettingsTab('about')} icon={<Info size={18} />} label="About" />
               </div>
-              <div className="sign-out-btn-wrap">
+
+              <div className="mt-auto pt-8">
                 <button 
                   onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}
-                  className="btn-signout-full"
+                  className="settings-nav-item-internal text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 w-full text-left"
                 >
-                  {isPreviewMode ? <User size={18} /> : <LogOut size={18} />}
-                  {isPreviewMode ? 'Sign In / Sign Up' : 'Sign Out'}
+                  <div className="nav-icon-wrap">
+                    <LogOut size={18} className="nav-icon text-red-500" />
+                    <span>{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
+                  </div>
                 </button>
               </div>
+            </aside>
+
+            {/* Content Area */}
+            <div className="settings-content-area">
+              {settingsTab === 'profile' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><User size={20} /></div>
+                    <h2 className="settings-page-title">Public <span>Profile</span></h2>
+                  </div>
+                  
+                  <div className="flex flex-col gap-8">
+                    <div className="profile-info-list">
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Full Name</span>
+                        <span className="profile-info-value">{user?.name || user?.displayName || 'Not provided'}</span>
+                      </div>
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Email Address</span>
+                        <span className="profile-info-value">{user?.email}</span>
+                      </div>
+                      <div className="profile-info-item">
+                        <span className="profile-info-label">Username (User ID)</span>
+                        <div className="flex items-center gap-3">
+                          <span className="profile-info-value font-mono text-indigo-600">@{user?.userId || 'not_set'}</span>
+                          <button 
+                            onClick={() => { setNewUserId(user?.userId || ''); setShowModal('set-userid'); }}
+                            className="btn btn-sm btn-ghost h-8 px-3 text-[10px] uppercase tracking-wider"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/10 mt-10">
+                      <div className="flex gap-4">
+                        <div className="text-indigo-600 pt-1"><Shield size={20} /></div>
+                        <div>
+                          <h4 className="text-sm font-bold text-text mb-1">Account Security</h4>
+                          <p className="text-xs text-muted leading-relaxed">Your account is protected by Google Firebase Authentication. Always keep your password secure and enable 2FA if possible.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'subscription' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><Crown size={20} /></div>
+                    <h2 className="settings-page-title">Manage <span>Subscription</span></h2>
+                  </div>
+
+                  <div className="payment-section">
+                    <h3 className="payment-section-title">Payment</h3>
+                    <p className="payment-section-sub">Add a payment method to manage your Expense Log Pro subscription.</p>
+                    <button className="btn btn-primary h-12 px-6 rounded-xl shadow-lg" onClick={() => setIsUpgradeModalOpen(true)}>
+                      <Plus size={18} /> Add payment method
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-800 text-text">Your Plan</h3>
+                      <button className="text-[10px] font-bold text-indigo-600 hover:underline uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-lg" onClick={() => setIsUpgradeModalOpen(true)}>Explore all plans</button>
+                    </div>
+
+                    <div className="p-6 rounded-3xl border-2 border-indigo-500/20 bg-indigo-500/5 relative overflow-hidden">
+                      <div className="flex gap-4 items-start mb-4">
+                        <div className="p-3 bg-indigo-500 text-white rounded-2xl shadow-lg shadow-indigo-500/20">
+                          <Gem size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-800 text-text">Premium Plan</h4>
+                          <div className="text-sm font-bold text-indigo-600 mt-1">₹999 / year</div>
+                        </div>
+                        {userPlan === 'premium' && (
+                          <div className="ml-auto bg-indigo-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Active</div>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted mb-6">The ultimate tool for personal and business finance management.</p>
+                      
+                      <div className="plan-feature-list">
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Advanced Analytics</div>
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Unlimited History</div>
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Multi-device Sync</div>
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Priority Support</div>
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Export (CSV, PDF)</div>
+                        <div className="plan-feature-item"><CheckCircle2 size={16} /> Custom Categories</div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 bg-surface rounded-3xl border border-border w-full gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600">
+                          <CreditCard size={20} />
+                        </div>
+                        <div className="text-sm font-bold">Accepted Methods</div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 sm:justify-end flex-shrink-0">
+                        <span className="text-[10px] font-800 uppercase tracking-wider px-3 py-1.5 bg-white dark:bg-slate-800 border border-border rounded-lg shadow-sm min-w-[70px] text-center">Card</span>
+                        <span className="text-[10px] font-800 uppercase tracking-wider px-3 py-1.5 bg-white dark:bg-slate-800 border border-border rounded-lg shadow-sm min-w-[70px] text-center">UPI</span>
+                        <span className="text-[10px] font-800 uppercase tracking-wider px-3 py-1.5 bg-white dark:bg-slate-800 border border-border rounded-lg shadow-sm min-w-[110px] text-center">Net Banking</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'wallet' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><Wallet size={20} /></div>
+                    <h2 className="settings-page-title">Digital <span>Wallet</span></h2>
+                  </div>
+
+                  <div className="flex flex-col gap-10">
+                    <section>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-800 text-text">Bank Accounts</h3>
+                        <p className="text-sm text-muted">Add bank accounts to sync your balances manually or automatically.</p>
+                      </div>
+                      <div className="wallet-card-list">
+                        {accounts.filter(a => a.type !== 'Credit').map((acc, i) => (
+                          <div key={i} className="wallet-item-card">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
+                                <Landmark size={20} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-sm truncate">{acc.name}</div>
+                                <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">{acc.type} Account</div>
+                              </div>
+                            </div>
+                            <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(acc.balance)}</div>
+                          </div>
+                        ))}
+                        <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Current' }); setShowModal('account'); }}>
+                          <Plus size={18} /> Add bank account
+                        </button>
+                      </div>
+                    </section>
+
+                    <section>
+                      <div className="mb-4">
+                        <h3 className="text-lg font-800 text-text">Assigned Cards</h3>
+                        <p className="text-sm text-muted">Manage your credit and debit cards for easy expense logging.</p>
+                      </div>
+                      <div className="wallet-card-list">
+                        {accounts.filter(a => a.type === 'Credit').map((acc, i) => (
+                          <div key={i} className="wallet-item-card">
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
+                                <CreditCard size={20} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-sm truncate">{acc.name}</div>
+                                <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">Credit Card</div>
+                              </div>
+                            </div>
+                            <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(acc.balance)}</div>
+                          </div>
+                        ))}
+                        <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Credit' }); setShowModal('account'); }}>
+                          <Plus size={18} /> Add personal card
+                        </button>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'preferences' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><Zap size={20} /></div>
+                    <h2 className="settings-page-title">App <span>Preferences</span></h2>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="settings-option py-6">
+                      <div className="settings-option-info">
+                        <span className="settings-option-label text-base">Dark Mode</span>
+                        <span className="settings-option-sub">Optimize the interface for low light conditions</span>
+                      </div>
+                      <label className="switch">
+                        <input type="checkbox" checked={isDark} onChange={() => setIsDark(!isDark)} />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="settings-option py-6">
+                      <div className="settings-option-info">
+                        <span className="settings-option-label text-base">Smart Notifications</span>
+                        <span className="settings-option-sub">Receive relevant feature updates and news</span>
+                      </div>
+                      <label className="switch">
+                        <input type="checkbox" defaultChecked />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="settings-option py-6">
+                      <div className="settings-option-info">
+                        <span className="settings-option-label text-base">Sound Effects</span>
+                        <span className="settings-option-sub">Mute all sounds from the application</span>
+                      </div>
+                      <label className="switch">
+                        <input type="checkbox" />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <SettingsItemLink icon={<Globe size={18} />} label="Language" value="English" />
+                    <SettingsItemLink icon={<Landmark size={18} />} label="Payment Currency" value="INR - ₹" />
+                    <SettingsItemLink icon={<Languages size={18} />} label="Priority Mode" value="Most Recent" />
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'help' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><HelpCircle size={20} /></div>
+                    <h2 className="settings-page-title">Help & <span>Support</span></h2>
+                  </div>
+
+                  <div className="flex flex-col gap-6">
+                    <div className="about-link-item rounded-3xl border border-border bg-surface mb-8 p-5">
+                      <div className="about-link-info">
+                        <div className="w-12 h-12 bg-indigo-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20"><Smartphone size={24} /></div>
+                        <div>
+                          <div className="font-bold text-sm">App Download Links</div>
+                          <div className="text-[10px] text-muted font-800 uppercase mt-1 tracking-wider">iOS, Android, Windows</div>
+                        </div>
+                      </div>
+                      <div className="p-2 bg-white dark:bg-slate-800 rounded-lg border border-border">
+                        <ChevronRight size={18} className="chevron" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-6 bg-surface rounded-3xl border border-border hover:border-indigo-500/30 transition-all cursor-pointer">
+                        <h4 className="font-bold mb-2">Knowledge Base</h4>
+                        <p className="text-xs text-muted leading-relaxed">Search our comprehensive guides for using Expense Log Pro effectively.</p>
+                      </div>
+                      <div className="p-6 bg-surface rounded-3xl border border-border hover:border-indigo-500/30 transition-all cursor-pointer">
+                        <h4 className="font-bold mb-2">Report a Bug</h4>
+                        <p className="text-xs text-muted leading-relaxed">Encountered an issue? Let our engineering team know immediately.</p>
+                      </div>
+                    </div>
+
+                    <div className="p-10 bg-indigo-600 text-white rounded-[40px] text-center shadow-2xl shadow-indigo-600/30 relative overflow-hidden">
+                      <div className="relative z-10">
+                        <h3 className="text-2xl font-800 mb-3">Need direct help?</h3>
+                        <p className="text-sm opacity-90 mb-8 max-w-md mx-auto leading-relaxed">Our premium support team is available 24/7 to assist you with any questions or technical issues.</p>
+                        <button className="bg-white text-indigo-600 px-10 h-14 rounded-2xl font-bold text-sm shadow-xl hover:scale-105 active:scale-95 transition-all">Contact Support</button>
+                      </div>
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                      <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'about' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><Info size={20} /></div>
+                    <h2 className="settings-page-title">About <span>App</span></h2>
+                  </div>
+
+                  <div className="about-banner">
+                    <img src="/logo.png" alt="Logo" className="about-banner-logo" />
+                    <div className="about-version">v2.4.8 Platinum</div>
+                  </div>
+
+                  <div className="mb-8 px-2">
+                    <h4 className="font-800 text-text mb-2">Expense Log Pro</h4>
+                    <p className="text-sm text-muted leading-relaxed">Expense Log Pro is a next-generation personal finance manager built by a global community of developers. Our mission is to democratize financial literacy and provide professional tools for everyone.</p>
+                  </div>
+
+                  <div className="rounded-3xl border border-border overflow-hidden">
+                    <AboutLink icon={<ArrowRight size={16} />} label="View Keyboard Shortcuts" />
+                    <AboutLink icon={<AtSign size={16} />} label="Follow us on Twitter" />
+                    <AboutLink icon={<Globe size={16} />} label="Visit our Website" />
+                    <AboutLink icon={<Lock size={16} />} label="Privacy Policy" />
+                  </div>
+                  
+                  <div className="mt-8 text-center">
+                    <div className="text-[10px] text-muted font-bold uppercase tracking-[0.2em] mb-4">Crafted with ❤️ by the Expense Log Team</div>
+                    <div className="flex justify-center gap-6">
+                      <span className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer">Terms of Service</span>
+                      <span className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer">Security</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
