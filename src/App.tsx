@@ -331,6 +331,7 @@ export default function App() {
 
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
+  const [outTab, setOutTab] = useState<'Payable' | 'Receivable'>('Payable');
   const [settingsTab, setSettingsTab] = useState<'profile' | 'subscription' | 'wallet' | 'preferences' | 'help' | 'about'>('profile');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -640,7 +641,9 @@ export default function App() {
 
   const filteredOutstanding = useMemo(() => {
     const filtered = outstanding.filter(r => {
-      if (outFilterState && r.State !== outFilterState) return false;
+      // Primary filter by active tab
+      if (r.State !== outTab) return false;
+      
       if (outFilterMonth && !r.Date.startsWith(outFilterMonth)) return false;
       if (outFilterCat && r.Category !== outFilterCat) return false;
       if (outFilterSubCat && r['Sub-Category'] !== outFilterSubCat) return false;
@@ -656,7 +659,7 @@ export default function App() {
       return true;
     });
     return sortData(filtered, outSort);
-  }, [outstanding, outSearch, outFilterState, outFilterMonth, outSort]);
+  }, [outstanding, outSearch, outTab, outFilterMonth, outFilterCat, outFilterSubCat, outSort]);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map(r => r.Date.slice(0, 7)).filter(Boolean));
@@ -1422,7 +1425,7 @@ export default function App() {
             <div className="flex flex-row items-center justify-between gap-4 w-full">
               <div className="flex-1">
                 <div className="page-title">Outstanding<span>.</span></div>
-                <div className="page-sub">{filteredOutstanding.length} entries found</div>
+                <div className="page-sub">{filteredOutstanding.length} {outTab.toLowerCase()} entries found</div>
               </div>
               
               <div className="flex gap-1 items-center">
@@ -1439,7 +1442,7 @@ export default function App() {
                       desc: '',
                       notes: '',
                       Accounts: 'Bank of Baroda',
-                      state: filterState as any,
+                      state: outTab,
                       status: 'Pending',
                       name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
                     });
@@ -1505,6 +1508,42 @@ export default function App() {
                 </button>
               </div>
             )}
+
+            {/* Tab Switcher */}
+            <div className="flex gap-8 mt-4 border-b border-border/40 overflow-x-auto no-scrollbar justify-center md:justify-start w-full">
+              <button 
+                className={cn(
+                  "pb-3 px-2 font-bold text-sm transition-all relative whitespace-nowrap", 
+                  outTab === 'Payable' ? "text-accent" : "text-muted hover:text-text"
+                )}
+                onClick={() => setOutTab('Payable')}
+              >
+                Payable
+                {outTab === 'Payable' && (
+                  <motion.div 
+                    layoutId="out-tab-underline" 
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" 
+                    initial={false}
+                  />
+                )}
+              </button>
+              <button 
+                className={cn(
+                  "pb-3 px-2 font-bold text-sm transition-all relative whitespace-nowrap", 
+                  outTab === 'Receivable' ? "text-accent" : "text-muted hover:text-text"
+                )}
+                onClick={() => setOutTab('Receivable')}
+              >
+                Receivable
+                {outTab === 'Receivable' && (
+                  <motion.div 
+                    layoutId="out-tab-underline" 
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" 
+                    initial={false}
+                  />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="table-card overflow-hidden mt-6">
@@ -1516,7 +1555,7 @@ export default function App() {
                       id="outstanding-search-input"
                       className="search-box w-full px-4" 
                       type="text" 
-                      placeholder="Search outstanding..." 
+                      placeholder={`Search ${outTab.toLowerCase()} entries...`} 
                       value={outSearch}
                       onChange={e => setOutSearch(e.target.value)}
                       autoFocus
@@ -1533,10 +1572,6 @@ export default function App() {
                 )}
                 {showOutFilters && (
                   <div id="outstanding-filters" className="flex flex-wrap gap-2 w-full animate-in fade-in slide-in-from-top-1">
-                    <select className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterState} onChange={e => setOutFilterState(e.target.value)}>
-                      <option value="">All States</option>
-                      <option>Payable</option><option>Receivable</option>
-                    </select>
                     <select className="filter-select flex-1 h-9 min-w-[120px]" value={outFilterCat} onChange={e => { setOutFilterCat(e.target.value); setOutFilterSubCat(''); }}>
                       <option value="">All Categories</option>
                       {Object.keys(CATEGORY_MAP_O).map(c => <option key={c} value={c}>{c}</option>)}
@@ -1551,10 +1586,10 @@ export default function App() {
                         <option key={m.value} value={m.value}>{m.label}</option>
                       ))}
                     </select>
-                    {(outFilterState || outFilterMonth || outFilterCat || outFilterSubCat) && (
+                    {(outFilterMonth || outFilterCat || outFilterSubCat) && (
                       <button 
                         className="btn btn-ghost btn-sm min-w-[36px] flex items-center justify-center text-accent bg-accent/5" 
-                        onClick={() => { setOutFilterState(''); setOutFilterMonth(''); setOutFilterCat(''); setOutFilterSubCat(''); }}
+                        onClick={() => { setOutFilterMonth(''); setOutFilterCat(''); setOutFilterSubCat(''); }}
                         title="Clear Filters"
                       >
                         <X size={14} />
@@ -1569,9 +1604,9 @@ export default function App() {
                 <thead>
                   <tr className="text-left border-b border-border">
                     {isEditingOutstanding && <th className="py-3 px-4 w-10"></th>}
-                    <th className="py-3 px-4 cursor-pointer" onClick={() => handleSort('out', 'Date')}>Desc</th>
-                    <th className="py-3 px-4 text-center">State</th>
+                    <th className="py-3 px-4 cursor-pointer" onClick={() => handleSort('out', 'Date')}>Details</th>
                     <th className="py-3 px-4 text-center cursor-pointer" onClick={() => handleSort('out', 'Amount')}>Amount</th>
+                    <th className="py-3 px-4">Notes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1610,7 +1645,7 @@ export default function App() {
                       }}
                     >
                       {isEditingOutstanding && (
-                        <td className="py-4 px-4">
+                        <td className="py-3 px-4">
                           <input 
                             type="checkbox" 
                             checked={!!(r as any).ID && selectedOutstanding.has(String((r as any).ID))} 
@@ -1619,37 +1654,32 @@ export default function App() {
                           />
                         </td>
                       )}
-                      <td className="py-4 px-4 text-left">
-                        <div className="font-bold text-sm text-text">{(r as any).Desc || (r as any)['Sub-Category'] || 'No description'}</div>
+                      <td className="py-3 px-4 text-left">
+                        <div className="font-bold text-sm text-text">{(r as any)['Sub-Category'] || (r as any).Desc || 'No description'}</div>
                         <div className="text-[10px] text-muted font-medium uppercase tracking-tight mt-0.5 whitespace-nowrap">
                           {fmtDate(r.Date)}
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-center">
-                        <span className={cn(
-                          "outstanding-state",
-                          (r as any).State === 'Payable' ? "payable" : "receivable"
-                        )}>
-                          {(r as any).State || 'Payable'}
-                        </span>
-                      </td>
-                      <td className={cn("py-4 px-4 text-center font-mono font-bold text-base whitespace-nowrap", (r as any).State === 'Payable' ? 'text-accent2' : 'text-accent')}>
+                      <td className={cn("py-3 px-4 text-center font-mono font-bold text-sm", r.State === 'Payable' ? 'text-accent2' : 'text-accent')}>
                         {fmt(r.Amount)}
+                      </td>
+                      <td className="py-3 px-4 text-xs text-muted">
+                        <div className="max-w-[200px] break-words line-clamp-2" title={r.Notes}>{r.Notes}</div>
                       </td>
                     </tr>
                   ))}
-                      {filteredOutstanding.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="py-12 text-center text-muted italic text-sm">
-                            No outstanding entries found.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
+                  {filteredOutstanding.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center text-muted italic text-sm">
+                        No {outTab.toLowerCase()} entries found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
         {/* Monthly (Timeline) */}
         <section className={cn("page-container", activePage === 'monthly' && "active")}>
