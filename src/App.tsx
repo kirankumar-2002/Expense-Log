@@ -56,6 +56,7 @@ import {
   Smartphone,
   Globe,
   Languages,
+  ArrowDownLeft,
   ArrowRight
 } from 'lucide-react';
 import { 
@@ -1421,17 +1422,17 @@ export default function App() {
 
         {/* Outstanding */}
         <section className={cn("page-container", activePage === 'outstanding' && "active")}>
-          <div className="page-header !flex !flex-col gap-4">
+          <div className="page-header !flex !flex-col gap-6 md:gap-8 mb-8">
             <div className="flex flex-row items-center justify-between gap-4 w-full">
               <div className="flex-1">
-                <div className="page-title">Outstanding<span>.</span></div>
-                <div className="page-sub">{filteredOutstanding.length} {outTab.toLowerCase()} entries found</div>
+                <div className="page-title text-2xl md:text-3xl font-black tracking-tight">Outstanding<span>.</span></div>
+                <div className="page-sub text-xs md:text-sm font-semibold tracking-tight text-muted/80">{filteredOutstanding.length} {outTab.toLowerCase()} entries found</div>
               </div>
               
-              <div className="flex gap-1 items-center">
+              <div className="flex gap-2 items-center">
                 {/* Desktop Only Add Entry */}
                 <button 
-                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
+                  className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[40px] px-4 shadow-glow" 
                   onClick={() => {
                     setEditId(null);
                     setFormData({
@@ -1450,8 +1451,8 @@ export default function App() {
                   }}
                   title="Add Entry"
                 >
-                  <Plus size={16} />
-                  <span className="hidden md:inline ml-1">Add Entry</span>
+                  <Plus size={18} />
+                  <span className="ml-1.5">Add Entry</span>
                 </button>
 
                 {!isEditingOutstanding && (
@@ -1463,12 +1464,12 @@ export default function App() {
                     }}
                     title="Edit Outstanding"
                   >
-                    <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span>
+                    <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-bold">Edit</span>
                   </button>
                 )}
 
                 <button 
-                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-3", (showOutFilters || showOutSearch) && "bg-accent/10 text-accent")} 
+                  className={cn("btn btn-ghost btn-sm flex items-center justify-center min-w-[36px] px-2 md:px-4 rounded-xl", (showOutFilters || showOutSearch) && "bg-accent/10 text-accent")} 
                   onClick={() => {
                     setShowOutFilters(!showOutFilters);
                     setShowOutSearch(!showOutFilters);
@@ -1476,13 +1477,13 @@ export default function App() {
                   title="Filter & Search"
                 >
                   <Filter size={16} />
-                  <span className="hidden md:inline ml-1">Filter</span>
+                  <span className="hidden md:inline ml-1.5 font-bold">Filter</span>
                 </button>
               </div>
             </div>
 
             {isEditingOutstanding && (
-              <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2">
+              <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2 mx-0 w-full max-w-full">
                 <button 
                   className="flex-1 btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl border-0 shadow-sm"
                   onClick={() => handleBulkStatusUpdate('Outstanding', 'Processed')}
@@ -1498,7 +1499,7 @@ export default function App() {
                   Delete
                 </button>
                 <button 
-                  className="flex-1 btn btn-sm btn-ghost text-muted font-semibold rounded-xl hover:bg-surface/50"
+                  className="flex-1 btn btn-sm btn-ghost text-muted font-bold rounded-xl hover:bg-surface/50"
                   onClick={() => {
                     setIsEditingOutstanding(false);
                     setSelectedOutstanding(new Set());
@@ -1509,44 +1510,36 @@ export default function App() {
               </div>
             )}
 
-            {/* Tab Switcher */}
-            <div className="flex gap-8 mt-4 border-b border-border/40 overflow-x-auto no-scrollbar justify-center md:justify-start w-full">
-              <button 
-                className={cn(
-                  "pb-3 px-2 font-bold text-sm transition-all relative whitespace-nowrap", 
-                  outTab === 'Payable' ? "text-accent" : "text-muted hover:text-text"
-                )}
-                onClick={() => setOutTab('Payable')}
-              >
-                Payable
-                {outTab === 'Payable' && (
-                  <motion.div 
-                    layoutId="out-tab-underline" 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" 
-                    initial={false}
-                  />
-                )}
-              </button>
-              <button 
-                className={cn(
-                  "pb-3 px-2 font-bold text-sm transition-all relative whitespace-nowrap", 
-                  outTab === 'Receivable' ? "text-accent" : "text-muted hover:text-text"
-                )}
-                onClick={() => setOutTab('Receivable')}
-              >
-                Receivable
-                {outTab === 'Receivable' && (
-                  <motion.div 
-                    layoutId="out-tab-underline" 
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" 
-                    initial={false}
-                  />
-                )}
-              </button>
+            {/* Toggle Button Switcher */}
+            <div className="flex justify-center md:justify-start w-full">
+              <div className="flex gap-2 p-1.5 bg-surface/50 backdrop-blur-md rounded-2xl border border-border/20 w-full max-w-[380px] shadow-sm">
+                <button 
+                  onClick={() => setOutTab('Payable')}
+                  className={cn(
+                    "flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
+                    outTab === 'Payable' 
+                      ? "bg-accent text-white shadow-glow scale-[1.02]" 
+                      : "text-muted hover:text-text hover:bg-card/50"
+                  )}
+                >
+                  Payable
+                </button>
+                <button 
+                  onClick={() => setOutTab('Receivable')}
+                  className={cn(
+                    "flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
+                    outTab === 'Receivable' 
+                      ? "bg-accent text-white shadow-glow scale-[1.02]" 
+                      : "text-muted hover:text-text hover:bg-card/50"
+                  )}
+                >
+                  Receivable
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="table-card overflow-hidden mt-6">
+          <div className="table-card overflow-hidden mt-4">
              {(showOutSearch || showOutFilters) && (
                <div id="outstanding-toolbar" className="table-toolbar flex flex-col gap-1.5 p-2 md:p-3 border-b border-border/40 bg-surface/30">
                 {(showOutSearch || (showOutFilters && window.innerWidth < 768)) && (
