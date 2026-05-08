@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { auth, db } from './firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { Mail, Lock, User, AlertCircle, Command } from 'lucide-react';
+import { Mail, Lock, User, AlertCircle, Command, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
@@ -12,6 +12,8 @@ const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -49,9 +51,7 @@ const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
         className="auth-card"
         style={isModal ? { background: 'transparent', backdropFilter: 'none', border: 'none', boxShadow: 'none' } : {}}
       >
-        <div className="auth-logo-wrap">
-          <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
-        </div>
+        <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
 
         <h1 className="auth-title">Join Us</h1>
         <p className="auth-subtitle">
@@ -92,13 +92,21 @@ const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
             <div className="auth-input-wrapper">
               <Lock className="auth-input-icon" size={20} />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 placeholder="Create password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="auth-input"
                 required
               />
+              <button 
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -106,13 +114,21 @@ const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
             <div className="auth-input-wrapper">
               <Lock className="auth-input-icon" size={20} />
               <input 
-                type="password" 
+                type={showConfirmPassword ? "text" : "password"} 
                 placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="auth-input"
                 required
               />
+              <button 
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

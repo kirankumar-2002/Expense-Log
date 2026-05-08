@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { auth, googleProvider } from './firebase';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { Mail, Lock, AlertCircle, Command, Chrome } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Command, Chrome, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '', isModal = false }) => {
@@ -10,6 +10,7 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '', isModal = 
   const [error, setError] = useState('');
   const [infoMessage, setInfoMessage] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -50,9 +51,7 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '', isModal = 
         className="auth-card"
         style={isModal ? { background: 'transparent', backdropFilter: 'none', border: 'none', boxShadow: 'none' } : {}}
       >
-        <div className="auth-logo-wrap">
-          <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
-        </div>
+        <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
 
         <h1 className="auth-title">Welcome Back</h1>
         <p className="auth-subtitle">
@@ -78,13 +77,21 @@ const SignIn = ({ onToggle, prefilledEmail = '', initialMessage = '', isModal = 
             <div className="auth-input-wrapper">
               <Lock className="auth-input-icon" size={18} />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="auth-input"
                 required
               />
+              <button 
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

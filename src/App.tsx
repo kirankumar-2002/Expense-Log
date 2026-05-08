@@ -1038,7 +1038,7 @@ export default function App() {
       <aside className={cn("sidebar", mobileSidebarOpen && "open")}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <Landmark size={20} />
+            <img src="/logo.png" alt="Expense Log Pro" />
           </div>
           <span className="sidebar-brand">Expense Log Pro</span>
         </div>
