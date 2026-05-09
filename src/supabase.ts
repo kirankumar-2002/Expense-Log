@@ -38,8 +38,9 @@ async function supabaseFetch<T = any>(
 
 // ---------- Transactions ----------
 
-export async function sbFetchTransactions() {
-  return supabaseFetch<any[]>('transactions', 'select=*&order=date.desc');
+export async function sbFetchTransactions(tenantId: string) {
+  if (!tenantId) return []; // Blank slate logic
+  return supabaseFetch<any[]>('transactions', `tenant_id=eq.${tenantId}&order=transaction_date.desc`);
 }
 
 export async function sbInsertTransaction(record: any) {
@@ -49,23 +50,24 @@ export async function sbInsertTransaction(record: any) {
   });
 }
 
-export async function sbUpdateTransaction(id: string, record: any) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}`, {
+export async function sbUpdateTransaction(id: string, tenantId: string, record: any) {
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'transactions')),
   });
 }
 
-export async function sbDeleteTransaction(id: string) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}`, {
+export async function sbDeleteTransaction(id: string, tenantId: string) {
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'DELETE',
   });
 }
 
 // ---------- Outstanding ----------
 
-export async function sbFetchOutstanding() {
-  return supabaseFetch<any[]>('outstanding', 'select=*&order=date.desc');
+export async function sbFetchOutstanding(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('outstanding', `tenant_id=eq.${tenantId}&order=date.desc`);
 }
 
 export async function sbInsertOutstanding(record: any) {
@@ -75,23 +77,24 @@ export async function sbInsertOutstanding(record: any) {
   });
 }
 
-export async function sbUpdateOutstanding(id: string, record: any) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}`, {
+export async function sbUpdateOutstanding(id: string, tenantId: string, record: any) {
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'outstanding')),
   });
 }
 
-export async function sbDeleteOutstanding(id: string) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}`, {
+export async function sbDeleteOutstanding(id: string, tenantId: string) {
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'DELETE',
   });
 }
 
 // ---------- Accounts ----------
 
-export async function sbFetchAccounts() {
-  return supabaseFetch<any[]>('accounts', 'select=*&order=name.asc');
+export async function sbFetchAccounts(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('accounts', `tenant_id=eq.${tenantId}&order=name.asc`);
 }
 
 export async function sbInsertAccount(record: any) {
@@ -101,18 +104,55 @@ export async function sbInsertAccount(record: any) {
   });
 }
 
-export async function sbUpdateAccount(id: string, record: any) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}`, {
+export async function sbUpdateAccount(id: string, tenantId: string, record: any) {
+  return supabaseFetch<any[]>('accounts', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapAccountToRow(record)),
   });
 }
 
-export async function sbDeleteAccount(id: string) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}`, {
+export async function sbDeleteAccount(id: string, tenantId: string) {
+  return supabaseFetch<any[]>('accounts', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
     method: 'DELETE',
   });
 }
+
+// ---------- Wallets ----------
+
+export async function sbFetchWallets(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('wallets', `tenant_id=eq.${tenantId}&order=name.asc`);
+}
+
+// ---------- Credit Cards ----------
+
+export async function sbFetchCreditCards(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('credit_cards', `tenant_id=eq.${tenantId}&order=name.asc`);
+}
+
+// ---------- Outstanding Entries ----------
+
+export async function sbFetchOutstandingEntries(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('outstanding_entries', `tenant_id=eq.${tenantId}&order=due_date.asc`);
+}
+
+// ---------- Payable / Receivable ----------
+
+export async function sbFetchPayableReceivable(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('payable_receivable', `tenant_id=eq.${tenantId}&order=due_date.asc`);
+}
+
+// ---------- Expenses ----------
+
+export async function sbFetchExpenses(tenantId: string) {
+  if (!tenantId) return [];
+  return supabaseFetch<any[]>('expenses', `tenant_id=eq.${tenantId}&order=expense_date.desc`);
+}
+
+
 
 // ---------- Data mapping (App format ↔ Supabase columns) ----------
 

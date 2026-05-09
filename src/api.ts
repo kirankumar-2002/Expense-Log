@@ -10,20 +10,21 @@ import {
 // Fetch (Read) — Supabase Primary
 // ============================================================
 
-export async function fetchTransactions() {
-  const rows = await sbFetchTransactions();
+export async function fetchTransactions(tenantId: string) {
+  const rows = await sbFetchTransactions(tenantId);
   return rows.map(mapRowToRecord);
 }
 
-export async function fetchOutstanding() {
-  const rows = await sbFetchOutstanding();
+export async function fetchOutstanding(tenantId: string) {
+  const rows = await sbFetchOutstanding(tenantId);
   return rows.map(mapRowToRecord);
 }
 
-export async function fetchAccounts() {
-  const rows = await sbFetchAccounts();
+export async function fetchAccounts(tenantId: string) {
+  const rows = await sbFetchAccounts(tenantId);
   return rows.map(mapRowToAccount);
 }
+
 
 // ============================================================
 // Write — Supabase Primary

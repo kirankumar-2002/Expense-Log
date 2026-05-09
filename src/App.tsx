@@ -482,10 +482,11 @@ export default function App() {
     if (showOverlay) setLoading(true);
     setSyncing(true);
     try {
+      const tenantId = user.uid;
       const [txData, outData, accData] = await Promise.all([
-        fetchTransactions(),
-        fetchOutstanding(),
-        fetchAccounts().catch(() => []) // Handle missing sheet gracefully
+        fetchTransactions(tenantId),
+        fetchOutstanding(tenantId),
+        fetchAccounts(tenantId).catch(() => []) // Handle missing sheet gracefully
       ]);
       
       const mapFinancialRecord = (r: any) => {
@@ -1778,61 +1779,61 @@ export default function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    'Canara Bank',
-                    'Bank of Baroda',
-                    'KOTAK Mahindra Bank',
-                    'HDFC Bank',
-                    'State Bank of India',
-                    'HDFC Money Back Plus'
-                  ].map((name, i) => {
-                    const acc = accounts.find(a => a.name === name);
-                    return (
-                      <tr 
-                        key={`acc-row-${i}`} 
-                        className="border-b border-border/40 hover:bg-surface/50 transition-colors cursor-pointer"
-                        onClick={() => {
-                          if (isEditingAccounts) {
-                            const accToEdit = accounts.find(a => a.name === name) || { id: null, balance: 0 };
-                            setEditId(accToEdit.id || null);
-                            setFormData({
-                              ...formData,
-                              name, 
-                              type: name.includes('Money Back') ? 'Credit' : name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings', 
-                              balance: String(accToEdit.balance || '0'), 
-                              month: format(new Date(), 'yyyy-MM')
-                            });
-                            setShowModal('account');
-                          } else {
-                            setSelectedAccount(name);
-                            setHistoryMonth(format(new Date(), 'yyyy-MM'));
-                            setShowModal('account-history');
-                          }
-                        }}
-                      >
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            {isEditingAccounts && <Edit3 size={16} className="text-accent" />}
-                            <div>
-                              <div className="font-bold text-sm text-text">{name}</div>
-                              <div className="text-[10px] text-muted uppercase font-medium">{name.includes('Money Back') ? 'Credit Card' : name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings'}</div>
+                  {accounts.length > 0 ? (
+                    accounts.map((acc, i) => {
+                      const name = acc.name;
+                      return (
+                        <tr 
+                          key={`acc-row-${acc.id || i}`} 
+                          className="border-b border-border/40 hover:bg-surface/50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (isEditingAccounts) {
+                              setEditId(acc.id || null);
+                              setFormData({
+                                ...formData,
+                                name, 
+                                type: acc.type || 'Current', 
+                                balance: String(acc.balance || '0'), 
+                                month: format(new Date(), 'yyyy-MM')
+                              });
+                              setShowModal('account');
+                            } else {
+                              setSelectedAccount(name);
+                              setHistoryMonth(format(new Date(), 'yyyy-MM'));
+                              setShowModal('account-history');
+                            }
+                          }}
+                        >
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              {isEditingAccounts && <Edit3 size={16} className="text-accent" />}
+                              <div>
+                                <div className="font-bold text-sm text-text">{name}</div>
+                                <div className="text-[10px] text-muted uppercase font-medium">{acc.type || 'Current'}</div>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right font-mono font-bold text-sm text-accent2">
-                          {(() => {
-                            const accTx = transactions.filter(r => r.Accounts === name && r.Date.startsWith(accFilterMonth));
-                            let currentMonthBalance = 0;
-                            accTx.forEach(r => {
-                              if (r.Category === 'Income') currentMonthBalance += r.Amount;
-                              else currentMonthBalance -= r.Amount;
-                            });
-                            return fmt(currentMonthBalance);
-                          })()}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="py-4 px-4 text-right font-mono font-bold text-sm text-accent2">
+                            {(() => {
+                              const accTx = transactions.filter(r => r.Accounts === name && r.Date.startsWith(accFilterMonth));
+                              let currentMonthBalance = Number(acc.balance) || 0;
+                              accTx.forEach(r => {
+                                if (r.Category === 'Income') currentMonthBalance += r.Amount;
+                                else currentMonthBalance -= r.Amount;
+                              });
+                              return fmt(currentMonthBalance);
+                            })()}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={2} className="py-12 text-center text-muted italic text-sm">
+                        No bank accounts found. Click "Add Account" to get started.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2011,18 +2012,12 @@ export default function App() {
                         <p className="text-sm text-muted">Add bank accounts to sync your balances manually or automatically.</p>
                       </div>
                       <div className="wallet-card-list">
-                        {[
-                          'Canara Bank',
-                          'Bank of Baroda',
-                          'KOTAK Mahindra Bank',
-                          'HDFC Bank',
-                          'State Bank of India'
-                        ].map((name, i) => {
-                          const acc = accounts.find(a => a.name === name);
-                          const type = name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings';
-                          const balance = acc ? acc.balance : 0;
+                        {accounts.filter(a => a.type !== 'Credit').map((acc, i) => {
+                          const name = acc.name;
+                          const type = acc.type || 'Current';
+                          const balance = acc.balance || 0;
                           return (
-                            <div key={i} className="wallet-item-card">
+                            <div key={acc.id || i} className="wallet-item-card">
                               <div className="flex items-center gap-4 min-w-0">
                                 <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
                                   <Landmark size={20} />
@@ -2036,10 +2031,16 @@ export default function App() {
                             </div>
                           );
                         })}
+                        {accounts.filter(a => a.type !== 'Credit').length === 0 && (
+                          <div className="py-8 text-center text-muted italic text-sm border border-dashed border-border/60 rounded-3xl mb-4">
+                            No bank accounts linked.
+                          </div>
+                        )}
                         <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Current' }); setShowModal('account'); }}>
                           <Plus size={18} /> Add bank account
                         </button>
                       </div>
+
                     </section>
 
                     <section>
