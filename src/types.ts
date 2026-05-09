@@ -19,7 +19,6 @@ export interface Account {
   name: string;
   type: 'Current' | 'Savings' | 'Credit';
   balance: number;
-  standardBalance?: number;
   lastUpdated: string;
   Month?: string;
 }

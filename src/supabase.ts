@@ -163,7 +163,6 @@ function mapAccountToRow(record: any) {
     name: record.name || '',
     type: record.type || 'Current',
     balance: parseFloat(String(record.balance || 0)),
-    standard_balance: parseFloat(String(record.standardBalance || record.standard_balance || 0)),
     month: record.Month || record.month || '',
     last_updated: record.lastUpdated || record.last_updated || new Date().toISOString(),
   };
@@ -178,7 +177,6 @@ export function mapRowToAccount(row: any) {
     name: row.name || '',
     type: row.type || 'Current',
     balance: Number(row.balance) || 0,
-    standardBalance: Number(row.standard_balance) || 0,
     lastUpdated: row.last_updated || '',
     Month: row.month || '',
   };

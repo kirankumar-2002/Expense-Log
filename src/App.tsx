@@ -390,7 +390,6 @@ export default function App() {
     name: '',
     type: 'Current' as 'Current' | 'Savings' | 'Credit',
     balance: '',
-    standardBalance: '',
     month: format(new Date(), 'yyyy-MM')
   });
 
@@ -685,7 +684,7 @@ export default function App() {
       let payload: any = { action: editId ? 'update' : 'add', id: editId };
       
       if (entryType === 'account') {
-        payload = { ...payload, sheet: 'Accounts', name: formData.name, bank: formData.bank, type: formData.type, balance: parseFloat(formData.balance) || 0, standardBalance: parseFloat(formData.standardBalance) || 0, Month: formData.month };
+        payload = { ...payload, sheet: 'Accounts', name: formData.name, bank: formData.bank, type: formData.type, balance: parseFloat(formData.balance) || 0, Month: formData.month };
       } else {
         const fullRecord: FinancialRecord = {
           ID: editId || '',
@@ -1152,8 +1151,7 @@ export default function App() {
                   notes: '',
                   Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
-                  status: 'Pending',
-                  name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                  name: '', type: 'Current', balance: '', month: format(new Date(), 'yyyy-MM')
                 });
                 setShowModal('transaction'); 
               }}
@@ -1211,8 +1209,7 @@ export default function App() {
                       notes: '',
                       Accounts: ACCOUNTS_LIST[0],
                       state: 'Payable',
-                      status: 'Pending',
-                      name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                      name: '', type: 'Current', balance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('transaction'); 
                   }}
@@ -1384,7 +1381,7 @@ export default function App() {
                             desc: r.Desc || '',
                             state: r.State || 'Payable',
                             status: r.Status || 'Processed',
-                            name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: ''
+                            name: '', bank: '', type: 'Current', balance: '', month: ''
                           });
                           setShowModal('transaction');
                         }
@@ -1444,8 +1441,7 @@ export default function App() {
                       notes: '',
                       Accounts: 'Bank of Baroda',
                       state: outTab,
-                      status: 'Pending',
-                      name: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                      name: '', type: 'Current', balance: '', month: format(new Date(), 'yyyy-MM')
                     });
                     setShowModal('outstanding');
                   }}
@@ -1631,7 +1627,7 @@ export default function App() {
                             state: r.State || 'Payable',
                             status: r.Status || 'Pending',
                             Accounts: r.Accounts || 'Bank of Baroda',
-                            name: '', type: 'Current', balance: '', standardBalance: '', month: ''
+                            name: '', type: 'Current', balance: '', month: ''
                           });
                           setShowModal('outstanding');
                         }
@@ -1751,8 +1747,7 @@ export default function App() {
                   setFormData({
                     ...formData,
                     date: new Date().toISOString().slice(0, 10),
-                    amount: '',
-                    name: '', type: 'Current', balance: '', standardBalance: ''
+                    name: '', type: 'Current', balance: ''
                   });
                   setShowModal('account'); 
                 }}
@@ -1780,7 +1775,6 @@ export default function App() {
                   <tr className="text-left border-b border-border">
                     <th className="py-3 px-4">Name</th>
                     <th className="py-3 px-4 text-right">Current</th>
-                    <th className="py-3 px-4 text-right">Standard</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1799,14 +1793,13 @@ export default function App() {
                         className="border-b border-border/40 hover:bg-surface/50 transition-colors cursor-pointer"
                         onClick={() => {
                           if (isEditingAccounts) {
-                            const accToEdit = accounts.find(a => a.name === name) || { id: null, balance: 0, standardBalance: 0 };
+                            const accToEdit = accounts.find(a => a.name === name) || { id: null, balance: 0 };
                             setEditId(accToEdit.id || null);
                             setFormData({
                               ...formData,
                               name, 
                               type: name.includes('Money Back') ? 'Credit' : name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings', 
                               balance: String(accToEdit.balance || '0'), 
-                              standardBalance: String(accToEdit.standardBalance || '0'), 
                               month: format(new Date(), 'yyyy-MM')
                             });
                             setShowModal('account');
@@ -1836,9 +1829,6 @@ export default function App() {
                             });
                             return fmt(currentMonthBalance);
                           })()}
-                        </td>
-                        <td className="py-4 px-4 text-right font-mono font-bold text-sm text-text">
-                          {acc && acc.standardBalance ? fmt(acc.standardBalance) : '₹0'}
                         </td>
                       </tr>
                     );
@@ -2021,20 +2011,31 @@ export default function App() {
                         <p className="text-sm text-muted">Add bank accounts to sync your balances manually or automatically.</p>
                       </div>
                       <div className="wallet-card-list">
-                        {accounts.filter(a => a.type !== 'Credit').map((acc, i) => (
-                          <div key={i} className="wallet-item-card">
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
-                                <Landmark size={20} />
+                        {[
+                          'Canara Bank',
+                          'Bank of Baroda',
+                          'KOTAK Mahindra Bank',
+                          'HDFC Bank',
+                          'State Bank of India'
+                        ].map((name, i) => {
+                          const acc = accounts.find(a => a.name === name);
+                          const type = name === 'Canara Bank' || name === 'Bank of Baroda' ? 'Current' : 'Savings';
+                          const balance = acc ? acc.balance : 0;
+                          return (
+                            <div key={i} className="wallet-item-card">
+                              <div className="flex items-center gap-4 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
+                                  <Landmark size={20} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-bold text-sm truncate">{name}</div>
+                                  <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">{type} Account</div>
+                                </div>
                               </div>
-                              <div className="min-w-0">
-                                <div className="font-bold text-sm truncate">{acc.name}</div>
-                                <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">{acc.type} Account</div>
-                              </div>
+                              <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(balance)}</div>
                             </div>
-                            <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(acc.balance)}</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Current' }); setShowModal('account'); }}>
                           <Plus size={18} /> Add bank account
                         </button>
@@ -2228,15 +2229,9 @@ export default function App() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="form-group">
-                    <label className="form-label">Current Balance (₹)</label>
-                    <input className="form-input" type="number" placeholder="" value={formData.balance} onChange={e => setFormData({ ...formData, balance: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Standard Balance (₹)</label>
-                    <input className="form-input" type="number" placeholder="" value={formData.standardBalance} onChange={e => setFormData({ ...formData, standardBalance: e.target.value })} />
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">Current Balance (₹)</label>
+                  <input className="form-input" type="number" placeholder="" value={formData.balance} onChange={e => setFormData({ ...formData, balance: e.target.value })} />
                 </div>
               </div>
             ) : showModal === 'account-history' ? (
@@ -2247,7 +2242,6 @@ export default function App() {
                         <tr className="text-left border-b border-border">
                           <th className="py-2 px-3">Month</th>
                           <th className="py-2 px-3 text-right">Current Balance</th>
-                          <th className="py-2 px-3 text-right">Standard Balance</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2262,7 +2256,6 @@ export default function App() {
                                 </div>
                               </td>
                               <td className="py-3 px-3 text-right font-mono font-bold text-accent2">{fmt(acc.balance)}</td>
-                              <td className="py-3 px-3 text-right font-mono font-bold text-text">{acc.standardBalance ? fmt(acc.standardBalance) : '₹0'}</td>
                            </tr>
                         ))}
                         {accounts.filter(a => a.name === selectedAccount).length === 0 && (
@@ -2382,7 +2375,7 @@ export default function App() {
                   ...formData,
                   date: new Date().toISOString().slice(0, 10),
                   amount: '',
-                  name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
+                  name: '', bank: '', type: 'Current', balance: ''
                 });
                 setShowModal('account'); 
               } else {
@@ -2397,7 +2390,7 @@ export default function App() {
                   Accounts: ACCOUNTS_LIST[0],
                   state: 'Payable',
                   status: 'Pending',
-                  name: '', bank: '', type: 'Current', balance: '', standardBalance: ''
+                  name: '', bank: '', type: 'Current', balance: ''
                 });
                 setShowModal('transaction');
               }
@@ -2421,7 +2414,8 @@ export default function App() {
                   Accounts: 'Bank of Baroda',
                   state: filterState as any,
                   status: 'Pending',
-                  name: '', bank: '', type: 'Current', balance: '', standardBalance: '', month: format(new Date(), 'yyyy-MM')
+                  name: '', type: 'Current', balance: '',
+                  month: format(new Date(), 'yyyy-MM')
                 });
                 setShowModal('outstanding');
             }}
