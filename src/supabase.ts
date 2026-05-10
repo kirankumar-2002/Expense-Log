@@ -38,9 +38,9 @@ async function supabaseFetch<T = any>(
 
 // ---------- Transactions ----------
 
-export async function sbFetchTransactions(tenantId: string) {
-  if (!tenantId) return []; // Blank slate logic
-  return supabaseFetch<any[]>('transactions', `tenant_id=eq.${tenantId}&order=transaction_date.desc`);
+export async function sbFetchTransactions(userId: string) {
+  if (!userId) return []; // Blank slate logic
+  return supabaseFetch<any[]>('transactions', `user_id=eq.${userId}&order=transaction_date.desc`);
 }
 
 export async function sbInsertTransaction(record: any) {
@@ -50,24 +50,24 @@ export async function sbInsertTransaction(record: any) {
   });
 }
 
-export async function sbUpdateTransaction(id: string, tenantId: string, record: any) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbUpdateTransaction(id: string, userId: string, record: any) {
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'transactions')),
   });
 }
 
-export async function sbDeleteTransaction(id: string, tenantId: string) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbDeleteTransaction(id: string, userId: string) {
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'DELETE',
   });
 }
 
 // ---------- Outstanding ----------
 
-export async function sbFetchOutstanding(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('outstanding', `tenant_id=eq.${tenantId}&order=date.desc`);
+export async function sbFetchOutstanding(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('outstanding', `user_id=eq.${userId}&order=date.desc`);
 }
 
 export async function sbInsertOutstanding(record: any) {
@@ -77,24 +77,24 @@ export async function sbInsertOutstanding(record: any) {
   });
 }
 
-export async function sbUpdateOutstanding(id: string, tenantId: string, record: any) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbUpdateOutstanding(id: string, userId: string, record: any) {
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'outstanding')),
   });
 }
 
-export async function sbDeleteOutstanding(id: string, tenantId: string) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbDeleteOutstanding(id: string, userId: string) {
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'DELETE',
   });
 }
 
 // ---------- Accounts ----------
 
-export async function sbFetchAccounts(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('accounts', `tenant_id=eq.${tenantId}&order=name.asc`);
+export async function sbFetchAccounts(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('accounts', `user_id=eq.${userId}&order=name.asc`);
 }
 
 export async function sbInsertAccount(record: any) {
@@ -104,52 +104,52 @@ export async function sbInsertAccount(record: any) {
   });
 }
 
-export async function sbUpdateAccount(id: string, tenantId: string, record: any) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbUpdateAccount(id: string, userId: string, record: any) {
+  return supabaseFetch<any[]>('accounts', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapAccountToRow(record)),
   });
 }
 
-export async function sbDeleteAccount(id: string, tenantId: string) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}&tenant_id=eq.${tenantId}`, {
+export async function sbDeleteAccount(id: string, userId: string) {
+  return supabaseFetch<any[]>('accounts', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'DELETE',
   });
 }
 
 // ---------- Wallets ----------
 
-export async function sbFetchWallets(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('wallets', `tenant_id=eq.${tenantId}&order=name.asc`);
+export async function sbFetchWallets(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('wallets', `user_id=eq.${userId}&order=name.asc`);
 }
 
 // ---------- Credit Cards ----------
 
-export async function sbFetchCreditCards(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('credit_cards', `tenant_id=eq.${tenantId}&order=name.asc`);
+export async function sbFetchCreditCards(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('credit_cards', `user_id=eq.${userId}&order=name.asc`);
 }
 
 // ---------- Outstanding Entries ----------
 
-export async function sbFetchOutstandingEntries(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('outstanding_entries', `tenant_id=eq.${tenantId}&order=due_date.asc`);
+export async function sbFetchOutstandingEntries(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('outstanding_entries', `user_id=eq.${userId}&order=due_date.asc`);
 }
 
 // ---------- Payable / Receivable ----------
 
-export async function sbFetchPayableReceivable(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('payable_receivable', `tenant_id=eq.${tenantId}&order=due_date.asc`);
+export async function sbFetchPayableReceivable(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('payable_receivable', `user_id=eq.${userId}&order=due_date.asc`);
 }
 
 // ---------- Expenses ----------
 
-export async function sbFetchExpenses(tenantId: string) {
-  if (!tenantId) return [];
-  return supabaseFetch<any[]>('expenses', `tenant_id=eq.${tenantId}&order=expense_date.desc`);
+export async function sbFetchExpenses(userId: string) {
+  if (!userId) return [];
+  return supabaseFetch<any[]>('expenses', `user_id=eq.${userId}&order=expense_date.desc`);
 }
 
 
@@ -162,10 +162,11 @@ export async function sbFetchExpenses(tenantId: string) {
  */
 function mapRecordToRow(record: any, _table: string) {
   // Never include `id` in the body — it's GENERATED ALWAYS in Postgres.
-  // For updates, the id is passed via the URL query param (e.g. ?id=eq.123).
-  return {
+  const rawAmount = parseFloat(String(record.Amount || record.amount || record.balance || 0));
+  const amountCents = Math.round(rawAmount * 100);
+
+  const mapped: any = {
     date: record.Date || record.date || null,
-    amount: parseFloat(String(record.Amount || record.amount || 0)),
     state: record.State || record.state || 'Payable',
     category: record.Category || record.category || '',
     sub_category: record['Sub-Category'] || record.subCategory || '',
@@ -174,7 +175,17 @@ function mapRecordToRow(record: any, _table: string) {
     description: record.Desc || record.desc || '',
     notes: record.Notes || record.notes || '',
   };
+
+  // Assign correct cent column based on table context or property presence
+  if (record.balance !== undefined || record.Balance !== undefined) {
+    mapped.balance_cents = amountCents;
+  } else {
+    mapped.amount_cents = amountCents;
+  }
+
+  return mapped;
 }
+
 
 /**
  * Maps a Supabase row back to the app's FinancialRecord format.
@@ -183,7 +194,7 @@ export function mapRowToRecord(row: any) {
   return {
     ID: String(row.id),
     Date: row.date || '',
-    Amount: Number(row.amount) || 0,
+    Amount: row.amount_cents ? row.amount_cents / 100 : (row.balance_cents ? row.balance_cents / 100 : 0),
     State: row.state || 'Payable',
     Category: row.category || '',
     'Sub-Category': row.sub_category || '',
@@ -193,6 +204,7 @@ export function mapRowToRecord(row: any) {
     Notes: row.notes || '',
   };
 }
+
 
 /**
  * Maps an Account record to a Supabase accounts row.

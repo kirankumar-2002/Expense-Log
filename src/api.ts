@@ -10,18 +10,18 @@ import {
 // Fetch (Read) — Supabase Primary
 // ============================================================
 
-export async function fetchTransactions(tenantId: string) {
-  const rows = await sbFetchTransactions(tenantId);
+export async function fetchTransactions(userId: string) {
+  const rows = await sbFetchTransactions(userId);
   return rows.map(mapRowToRecord);
 }
 
-export async function fetchOutstanding(tenantId: string) {
-  const rows = await sbFetchOutstanding(tenantId);
+export async function fetchOutstanding(userId: string) {
+  const rows = await sbFetchOutstanding(userId);
   return rows.map(mapRowToRecord);
 }
 
-export async function fetchAccounts(tenantId: string) {
-  const rows = await sbFetchAccounts(tenantId);
+export async function fetchAccounts(userId: string) {
+  const rows = await sbFetchAccounts(userId);
   return rows.map(mapRowToAccount);
 }
 

@@ -17,7 +17,7 @@ export const authUsers = authSchema.table("users", {
 /**
  * Profiles Table
  * Linked 1:1 with auth.users.
- * Serves as the source of truth for the 'tenant_id'.
+ * Serves as the source of truth for the 'user_id'.
  */
 export const profiles = pgTable("profiles", {
 	id: uuid("id")
@@ -30,11 +30,11 @@ export const profiles = pgTable("profiles", {
 
 /**
  * Categories Table
- * Multi-tenant using tenant_id.
+ * Multi-tenant using user_id.
  */
 export const categories = pgTable("categories", {
 	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => profiles.id, { onDelete: "cascade" }),
 	name: text("name").notNull(),
@@ -45,136 +45,69 @@ export const categories = pgTable("categories", {
 
 /**
  * Transactions Table
- * Multi-tenant using tenant_id.
- * Monetary values stored as BIGINT in cents.
+ * Multi-tenant using user_id.
  */
 export const transactions = pgTable("transactions", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
-		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	profileId: uuid("profile_id")
-		.notNull()
-		.references(() => profiles.id),
-	categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
-	amountCents: bigint("amount_cents", { mode: "number" }).notNull(),
-	description: text("description"),
-	transactionDate: timestamp("transaction_date").defaultNow().notNull(),
-	metadata: jsonb("metadata").$type<Record<string, any>>(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-/**
- * Idempotency Keys Table
- * Stores responses for POST/PUT requests to prevent duplicate processing.
- */
-export const idempotencyKeys = pgTable("idempotency_keys", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	key: uuid("key").notNull(), // The client-provided UUID
+	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
 	userId: uuid("user_id")
 		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	responseCode: bigint("response_code", { mode: "number" }).notNull(),
-	responseBody: jsonb("response_body").notNull(),
+		.default(sql`auth.uid()`)
+		.references(() => authUsers.id, { onDelete: "cascade" }),
+	date: text("date").notNull().default(sql`CURRENT_DATE`),
+	amountCents: bigint("amount_cents", { mode: "number" }).notNull().default(0),
+	state: text("state").notNull().default("Payable"),
+	category: text("category").notNull().default(""),
+	subCategory: text("sub_category").notNull().default(""),
+	status: text("status").notNull().default("Pending"),
+	accounts: text("accounts").notNull().default(""),
+	description: text("description").notNull().default(""),
+	notes: text("notes").notNull().default(""),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-/**
- * Accounts Table
- * Standard bank accounts.
- */
-export const accounts = pgTable("accounts", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
-		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	type: text("type").notNull().default("Current"),
-	balanceCents: bigint("balance_cents", { mode: "number" }).notNull().default(0),
-	month: text("month"),
-	lastUpdated: timestamp("last_updated").defaultNow().notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-/**
- * Wallets Table
- * Cash and digital wallets.
- */
-export const wallets = pgTable("wallets", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
-		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	balanceCents: bigint("balance_cents", { mode: "number" }).notNull().default(0),
-	lastUpdated: timestamp("last_updated").defaultNow().notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-/**
- * Credit Cards Table
- */
-export const creditCards = pgTable("credit_cards", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
-		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	limitCents: bigint("limit_cents", { mode: "number" }).notNull().default(0),
-	balanceCents: bigint("balance_cents", { mode: "number" }).notNull().default(0),
-	lastUpdated: timestamp("last_updated").defaultNow().notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 /**
  * Outstanding Entries Table
- * Tracking pending items that require action.
  */
-export const outstandingEntries = pgTable("outstanding_entries", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
+export const outstandingEntries = pgTable("outstanding", {
+	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+	userId: uuid("user_id")
 		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	title: text("title").notNull(),
+		.default(sql`auth.uid()`)
+		.references(() => authUsers.id, { onDelete: "cascade" }),
+	date: text("date").notNull().default(sql`CURRENT_DATE`),
 	amountCents: bigint("amount_cents", { mode: "number" }).notNull().default(0),
-	dueDate: timestamp("due_date"),
+	state: text("state").notNull().default("Payable"),
+	category: text("category").notNull().default(""),
+	subCategory: text("sub_category").notNull().default(""),
 	status: text("status").notNull().default("Pending"),
+	accounts: text("accounts").notNull().default(""),
+	description: text("description").notNull().default(""),
+	notes: text("notes").notNull().default(""),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 /**
- * Payable/Receivable Table
- * For tracking debts and credits.
+ * Accounts Table
  */
-export const payableReceivable = pgTable("payable_receivable", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
+export const accounts = pgTable("accounts", {
+	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+	userId: uuid("user_id")
 		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	entityName: text("entity_name").notNull(),
-	type: text("type").notNull(), // 'Payable' or 'Receivable'
-	amountCents: bigint("amount_cents", { mode: "number" }).notNull().default(0),
-	description: text("description"),
-	dueDate: timestamp("due_date"),
-	status: text("status").notNull().default("Open"),
+		.default(sql`auth.uid()`)
+		.references(() => authUsers.id, { onDelete: "cascade" }),
+	name: text("name").notNull().default(""),
+	bank: text("bank").notNull().default(""),
+	type: text("type").notNull().default("Current"),
+	balanceCents: bigint("balance_cents", { mode: "number" }).notNull().default(0),
+	standardBalanceCents: bigint("standard_balance_cents", { mode: "number" }).notNull().default(0),
+	month: text("month").notNull().default(""),
+	lastUpdated: timestamp("last_updated").defaultNow().notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-/**
- * Expenses Table
- * Granular expense tracking.
- */
-export const expenses = pgTable("expenses", {
-	id: uuid("id").primaryKey().defaultRandom(),
-	tenantId: uuid("tenant_id")
-		.notNull()
-		.references(() => profiles.id, { onDelete: "cascade" }),
-	categoryId: uuid("category_id").references(() => categories.id),
-	amountCents: bigint("amount_cents", { mode: "number" }).notNull().default(0),
-	description: text("description"),
-	expenseDate: timestamp("expense_date").defaultNow().notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+
 
 
 

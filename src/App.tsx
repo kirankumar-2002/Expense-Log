@@ -482,11 +482,11 @@ export default function App() {
     if (showOverlay) setLoading(true);
     setSyncing(true);
     try {
-      const tenantId = user.uid;
+      const userId = user.uid;
       const [txData, outData, accData] = await Promise.all([
-        fetchTransactions(tenantId),
-        fetchOutstanding(tenantId),
-        fetchAccounts(tenantId).catch(() => []) // Handle missing sheet gracefully
+        fetchTransactions(userId),
+        fetchOutstanding(userId),
+        fetchAccounts(userId).catch(() => []) // Handle missing sheet gracefully
       ]);
       
       const mapFinancialRecord = (r: any) => {
