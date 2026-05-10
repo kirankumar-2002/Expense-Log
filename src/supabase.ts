@@ -40,7 +40,7 @@ async function supabaseFetch<T = any>(
 
 export async function sbFetchTransactions(userId: string) {
   if (!userId) return []; // Blank slate logic
-  return supabaseFetch<any[]>('transactions', `user_id=eq.${userId}&order=transaction_date.desc`);
+  return supabaseFetch<any[]>('transactions', `select=id,date,amount_cents,balance_cents,state,category,sub_category,status,accounts,description,notes,created_at,updated_at&user_id=eq.${userId}&order=date.desc`);
 }
 
 export async function sbInsertTransaction(record: any) {
@@ -67,7 +67,7 @@ export async function sbDeleteTransaction(id: string, userId: string) {
 
 export async function sbFetchOutstanding(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('outstanding', `user_id=eq.${userId}&order=date.desc`);
+  return supabaseFetch<any[]>('outstanding', `select=id,date,amount_cents,balance_cents,state,category,sub_category,status,accounts,description,notes,created_at,updated_at&user_id=eq.${userId}&order=date.desc`);
 }
 
 export async function sbInsertOutstanding(record: any) {
@@ -94,7 +94,7 @@ export async function sbDeleteOutstanding(id: string, userId: string) {
 
 export async function sbFetchAccounts(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('accounts', `user_id=eq.${userId}&order=name.asc`);
+  return supabaseFetch<any[]>('accounts', `select=id,name,bank,type,balance,balance_cents,standard_balance_cents,month,last_updated,created_at&user_id=eq.${userId}&order=name.asc`);
 }
 
 export async function sbInsertAccount(record: any) {
@@ -121,35 +121,35 @@ export async function sbDeleteAccount(id: string, userId: string) {
 
 export async function sbFetchWallets(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('wallets', `user_id=eq.${userId}&order=name.asc`);
+  return supabaseFetch<any[]>('wallets', `select=id,name,balance_cents,created_at&user_id=eq.${userId}&order=name.asc`);
 }
 
 // ---------- Credit Cards ----------
 
 export async function sbFetchCreditCards(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('credit_cards', `user_id=eq.${userId}&order=name.asc`);
+  return supabaseFetch<any[]>('credit_cards', `select=id,name,bank,balance_cents,created_at&user_id=eq.${userId}&order=name.asc`);
 }
 
 // ---------- Outstanding Entries ----------
 
 export async function sbFetchOutstandingEntries(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('outstanding_entries', `user_id=eq.${userId}&order=due_date.asc`);
+  return supabaseFetch<any[]>('outstanding_entries', `select=id,date,amount_cents,state,category,sub_category,status,accounts,description,notes,due_date,created_at&user_id=eq.${userId}&order=due_date.asc`);
 }
 
 // ---------- Payable / Receivable ----------
 
 export async function sbFetchPayableReceivable(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('payable_receivable', `user_id=eq.${userId}&order=due_date.asc`);
+  return supabaseFetch<any[]>('payable_receivable', `select=id,date,amount_cents,state,category,sub_category,status,accounts,description,notes,due_date,created_at&user_id=eq.${userId}&order=due_date.asc`);
 }
 
 // ---------- Expenses ----------
 
 export async function sbFetchExpenses(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('expenses', `user_id=eq.${userId}&order=expense_date.desc`);
+  return supabaseFetch<any[]>('expenses', `select=id,date,amount_cents,category,sub_category,status,accounts,description,notes,expense_date,created_at&user_id=eq.${userId}&order=expense_date.desc`);
 }
 
 
@@ -245,11 +245,8 @@ export async function sbSyncProfile(firebaseUser: any, extraData: any = {}) {
     console.error('❌ sbSyncProfile: No firebaseUser provided');
     return;
   }
-  console.log('🔄 Syncing user profile to Supabase...', firebaseUser.uid);
-  console.log('👤 Firebase User Info:', { 
-    email: firebaseUser.email, 
-    providers: firebaseUser.providerData?.map((p: any) => p.providerId) 
-  });
+  // Identity-scrubbed logging — no UIDs or internal IDs in client console
+  console.log('🔄 Syncing user profile to Supabase...');
   
   const providerData = firebaseUser.providerData?.[0] || {};
   const rawProviderId = providerData.providerId || firebaseUser.providerId || '';
@@ -285,7 +282,7 @@ export async function sbSyncProfile(firebaseUser: any, extraData: any = {}) {
     }
 
     const data = await res.json();
-    console.log('✅ Supabase profile synced:', data[0]?.email);
+    console.log('✅ Supabase profile synced successfully.');
     return data[0];
   } catch (err) {
     console.error('❌ Error in sbSyncProfile:', err);

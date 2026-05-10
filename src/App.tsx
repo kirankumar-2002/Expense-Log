@@ -263,7 +263,7 @@ export default function App() {
             setUser({ ...u, ...newUser });
             setUserPlan('free');
             
-            console.log('✅ New Google user created in Firestore, syncing to Supabase...');
+            console.log('✅ User profile synced to Supabase.');
             sbSyncProfile(u, newUser).catch(console.error);
           }
         } catch (err) {
@@ -318,7 +318,7 @@ export default function App() {
       // Don't intercept clicks inside the modal content
       if (target.closest('.modal-content')) return;
       
-      console.log('Preview interaction intercepted via window listener');
+
       // We don't necessarily want to preventDefault on everything (like scrolling),
       // but the user said "Show the Sign In interface". 
       // If we show it, it will cover the screen anyway.
@@ -1909,7 +1909,7 @@ export default function App() {
                         <span className="profile-info-value">{user?.email}</span>
                       </div>
                       <div className="profile-info-item">
-                        <span className="profile-info-label">Username (User ID)</span>
+                        <span className="profile-info-label">Username</span>
                         <div className="flex items-center gap-3">
                           <span className="profile-info-value font-mono text-indigo-600">@{user?.userId || 'not_set'}</span>
                           <button 

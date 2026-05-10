@@ -7,7 +7,8 @@ import * as admin from "firebase-admin";
  */
 
 export default async (req: Request, context: Context) => {
-  console.log("🚀 Starting User Sync Process...");
+  // Identity-scrubbed: Only aggregate counts logged, no UIDs or emails
+  console.log("🚀 Starting Scheduled User Sync...");
 
   const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -93,7 +94,7 @@ export default async (req: Request, context: Context) => {
       nextPageToken = listUsersResult.pageToken;
     } while (nextPageToken);
 
-    console.log("✅ Sync Complete:", results);
+    console.log(`✅ Sync Complete: ${results.synced}/${results.total} users synced, ${results.failed} failed.`);
     return new Response(JSON.stringify(results), { status: 200 });
 
   } catch (err: any) {
