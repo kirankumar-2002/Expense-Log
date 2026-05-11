@@ -11,7 +11,7 @@ import SignIn from './SignIn';
 import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
-import { sbSyncProfile } from './supabase';
+import { sbSyncProfile, setSupabaseToken, setSupabaseUser } from './supabase';
 import { 
   Plus, 
   Trash2, 
@@ -34,7 +34,6 @@ import {
   Gem,
   CheckCircle2,
   Lock,
-  WalletCards,
   ArrowUpRight,
   ArrowDownRight,
   RefreshCcw,
@@ -227,6 +226,14 @@ export default function App() {
           setIsAuthLoading(false);
           return;
         }
+        // Set Supabase Token
+        try {
+          const token = await u.getIdToken();
+          setSupabaseToken(token);
+          setSupabaseUser(u.uid);
+        } catch (e) {
+          console.error("Failed to get Firebase token", e);
+        }
 
         // Fetch/Initialize User from Firestore
         try {
@@ -275,6 +282,8 @@ export default function App() {
           sbSyncProfile(u).catch(console.error);
         }
       } else {
+        setSupabaseToken(null);
+        setSupabaseUser(null);
         setUser(null);
         setUserPlan('free');
         setIsPreviewMode(true);
@@ -1140,6 +1149,49 @@ export default function App() {
               <div className="page-sub">{dashboardStats.monthLabel} activity summary</div>
             </div>
             <button 
+              className="hidden md:flex btn btn-secondary btn-sm md:btn-md items-center justify-center min-w-[36px] px-2 md:px-4 gap-2"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = async (e: any) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = async (event) => {
+                    const base64 = event.target?.result as string;
+                    try {
+                      showToast('Scanning receipt...', 'success');
+                      const res = await fetch('/api/scan-receipt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: base64 })
+                      });
+                      if (!res.ok) throw new Error('Scan failed');
+                      const data = await res.json();
+                      setFormData(prev => ({
+                        ...prev,
+                        amount: data.total || '',
+                        desc: data.merchant || '',
+                        category: data.category || 'Expenses',
+                        date: data.date || prev.date
+                      }));
+                      setShowModal('transaction');
+                      showToast('Receipt scanned successfully!');
+                    } catch (err) {
+                      showToast('Failed to scan receipt', 'error');
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                };
+                input.click();
+              }}
+              title="Scan Receipt"
+            >
+              <Zap size={16} className="text-amber-400" />
+              <span className="hidden md:inline">Scan Receipt</span>
+            </button>
+            <button 
               className="hidden md:flex btn btn-primary btn-sm md:btn-md items-center justify-center min-w-[36px] px-2 md:px-4 gap-2" 
               onClick={() => { 
                 setEditId(null); 
@@ -1508,30 +1560,28 @@ export default function App() {
             )}
 
             {/* Toggle Button Switcher */}
-            <div className="flex justify-center md:justify-start w-full">
-              <div className="flex gap-2 p-1.5 bg-surface/50 backdrop-blur-md rounded-2xl border border-border/20 w-full max-w-[380px] shadow-sm">
-                <button 
-                  onClick={() => setOutTab('Payable')}
-                  className={cn(
-                    "flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
-                    outTab === 'Payable' 
-                      ? "bg-accent text-white shadow-glow scale-[1.02]" 
-                      : "text-muted hover:text-text hover:bg-card/50"
-                  )}
-                >
-                  Payable
-                </button>
-                <button 
-                  onClick={() => setOutTab('Receivable')}
-                  className={cn(
-                    "flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300",
-                    outTab === 'Receivable' 
-                      ? "bg-accent text-white shadow-glow scale-[1.02]" 
-                      : "text-muted hover:text-text hover:bg-card/50"
-                  )}
-                >
-                  Receivable
-                </button>
+            <div className="flex justify-center w-full">
+              <div className="flex relative bg-slate-100 dark:bg-slate-800 rounded-full p-1 shadow-inner w-full md:w-[400px]">
+                {['Payable', 'Receivable'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setOutTab(tab as any)}
+                    className={cn(
+                      "relative flex-1 min-h-[48px] rounded-full text-sm font-bold uppercase tracking-widest z-10 transition-colors duration-300",
+                      outTab === tab ? "text-white" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                  >
+                    {outTab === tab && (
+                      <motion.div
+                        layoutId="activeOutTab"
+                        className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full shadow-md"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-20">{tab}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>

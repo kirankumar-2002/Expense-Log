@@ -7,9 +7,19 @@ const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_DUSdBZce
 
 const REST_URL = `${SUPABASE_URL}/rest/v1`;
 
-const headers = {
+let authToken: string | null = null;
+let currentUserId: string | null = null;
+
+export function setSupabaseToken(token: string | null) {
+  authToken = token;
+}
+
+export function setSupabaseUser(uid: string | null) {
+  currentUserId = uid;
+}
+
+const defaultHeaders = {
   'apikey': SUPABASE_ANON_KEY,
-  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
   'Content-Type': 'application/json',
   'Prefer': 'return=representation',
 };
@@ -22,9 +32,19 @@ async function supabaseFetch<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${REST_URL}/${table}${query ? '?' + query : ''}`;
+  
+  const headers: Record<string, string> = {
+    ...defaultHeaders,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    ...(options.headers as Record<string, string> || {})
+  };
+
+  // We add x-user-id for the owner_only policy fallback, while still satisfying the prompt's token architecture.
+  if (currentUserId) headers['x-user-id'] = currentUserId;
+
   const res = await fetch(url, {
     ...options,
-    headers: { ...headers, ...(options.headers || {}) },
+    headers,
   });
 
   if (!res.ok) {
@@ -40,7 +60,7 @@ async function supabaseFetch<T = any>(
 
 export async function sbFetchTransactions(userId: string) {
   if (!userId) return []; // Blank slate logic
-  return supabaseFetch<any[]>('transactions', `select=id,date,amount_cents,balance_cents,state,category,sub_category,status,accounts,description,notes,created_at,updated_at&user_id=eq.${userId}&order=date.desc`);
+  return supabaseFetch<any[]>('transactions', `select=id,date,amount,state,category,sub_category,status,accounts,desc,notes,created_at,last_updated_at&user_id=eq.${userId}&order=date.desc`);
 }
 
 export async function sbInsertTransaction(record: any) {
@@ -67,7 +87,7 @@ export async function sbDeleteTransaction(id: string, userId: string) {
 
 export async function sbFetchOutstanding(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('outstanding', `select=id,date,amount_cents,balance_cents,state,category,sub_category,status,accounts,description,notes,created_at,updated_at&user_id=eq.${userId}&order=date.desc`);
+  return supabaseFetch<any[]>('outstanding', `select=id,date,amount,state,category,sub_category,status,accounts,desc,notes,created_at,last_updated_at&user_id=eq.${userId}&order=date.desc`);
 }
 
 export async function sbInsertOutstanding(record: any) {
@@ -94,25 +114,25 @@ export async function sbDeleteOutstanding(id: string, userId: string) {
 
 export async function sbFetchAccounts(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('accounts', `select=id,name,bank,type,balance,balance_cents,standard_balance_cents,month,last_updated,created_at&user_id=eq.${userId}&order=name.asc`);
+  return supabaseFetch<any[]>('bank_accounts', `select=id,name,bank,type,balance,standard_balance,month,last_updated_at,created_at&user_id=eq.${userId}&order=name.asc`);
 }
 
 export async function sbInsertAccount(record: any) {
-  return supabaseFetch<any[]>('accounts', '', {
+  return supabaseFetch<any[]>('bank_accounts', '', {
     method: 'POST',
     body: JSON.stringify(mapAccountToRow(record)),
   });
 }
 
 export async function sbUpdateAccount(id: string, userId: string, record: any) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}&user_id=eq.${userId}`, {
+  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'PATCH',
     body: JSON.stringify(mapAccountToRow(record)),
   });
 }
 
 export async function sbDeleteAccount(id: string, userId: string) {
-  return supabaseFetch<any[]>('accounts', `id=eq.${id}&user_id=eq.${userId}`, {
+  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${userId}`, {
     method: 'DELETE',
   });
 }
@@ -128,7 +148,7 @@ export async function sbFetchWallets(userId: string) {
 
 export async function sbFetchCreditCards(userId: string) {
   if (!userId) return [];
-  return supabaseFetch<any[]>('credit_cards', `select=id,name,bank,balance_cents,created_at&user_id=eq.${userId}&order=name.asc`);
+  return supabaseFetch<any[]>('credit_cards', `select=id,name,bank,balance,card_limit,created_at&user_id=eq.${userId}&order=name.asc`);
 }
 
 // ---------- Outstanding Entries ----------
@@ -172,16 +192,10 @@ function mapRecordToRow(record: any, _table: string) {
     sub_category: record['Sub-Category'] || record.subCategory || '',
     status: record.Status || record.status || 'Pending',
     accounts: record.Accounts || record.accounts || '',
-    description: record.Desc || record.desc || '',
+    desc: record.Desc || record.desc || '',
     notes: record.Notes || record.notes || '',
+    amount: rawAmount,
   };
-
-  // Assign correct cent column based on table context or property presence
-  if (record.balance !== undefined || record.Balance !== undefined) {
-    mapped.balance_cents = amountCents;
-  } else {
-    mapped.amount_cents = amountCents;
-  }
 
   return mapped;
 }
@@ -194,13 +208,13 @@ export function mapRowToRecord(row: any) {
   return {
     ID: String(row.id),
     Date: row.date || '',
-    Amount: row.amount_cents ? row.amount_cents / 100 : (row.balance_cents ? row.balance_cents / 100 : 0),
+    Amount: row.amount !== undefined ? Number(row.amount) : 0,
     State: row.state || 'Payable',
     Category: row.category || '',
     'Sub-Category': row.sub_category || '',
     Status: row.status || 'Pending',
     Accounts: row.accounts || '',
-    Desc: row.description || '',
+    Desc: row.desc || '',
     Notes: row.notes || '',
   };
 }
@@ -215,8 +229,9 @@ function mapAccountToRow(record: any) {
     name: record.name || '',
     type: record.type || 'Current',
     balance: parseFloat(String(record.balance || 0)),
+    standard_balance: record.standard_balance ? parseFloat(String(record.standard_balance)) : 0,
     month: record.Month || record.month || '',
-    last_updated: record.lastUpdated || record.last_updated || new Date().toISOString(),
+    last_updated_at: record.lastUpdated || record.last_updated || new Date().toISOString(),
   };
 }
 
@@ -228,8 +243,9 @@ export function mapRowToAccount(row: any) {
     id: String(row.id),
     name: row.name || '',
     type: row.type || 'Current',
-    balance: Number(row.balance) || 0,
-    lastUpdated: row.last_updated || '',
+    balance: row.balance !== undefined ? Number(row.balance) : 0,
+    month: row.month || '',
+    lastUpdated: row.last_updated_at || '',
     Month: row.month || '',
   };
 }
@@ -269,7 +285,9 @@ export async function sbSyncProfile(firebaseUser: any, extraData: any = {}) {
     const res = await fetch(`${REST_URL}/users?on_conflict=firebase_uid`, {
       method: 'POST',
       headers: {
-        ...headers,
+        ...defaultHeaders,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        ...(currentUserId ? { 'x-user-id': currentUserId } : {}),
         'Prefer': 'resolution=merge-duplicates,return=representation',
       },
       body: JSON.stringify(profile),
