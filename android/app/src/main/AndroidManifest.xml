@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".ExpenseLogApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Expense Log Pro"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        
+        <!-- Main Activity (Placeholder) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.app-initializer"
+            android:exported="false"
+            tools:node="merge"
+            xmlns:tools="http://schemas.android.com/tools">
+            <!-- This disables the default WorkManager initializer to use the custom one in ExpenseLogApp -->
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+    </application>
+
+</manifest>
