@@ -1,6 +1,4 @@
 import { Config, Context } from "@netlify/functions";
-import { createClient } from "@supabase/supabase-js";
-
 export default async (req: Request, context: Context) => {
   console.log("Running daily health check...");
   
@@ -13,16 +11,17 @@ export default async (req: Request, context: Context) => {
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 1. DB Connectivity Check
-    const { data: dbData, error: dbError } = await supabase
-      .from("users")
-      .select("id")
-      .limit(1);
+    // 1. DB Connectivity Check using fetch
+    const res = await fetch(`${supabaseUrl}/rest/v1/users?select=id&limit=1`, {
+      headers: {
+        'apikey': supabaseServiceKey,
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      }
+    });
       
-    if (dbError) {
-      console.error("Database connectivity check failed:", dbError);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Database connectivity check failed:", errorText);
       return new Response("Database Error", { status: 500 });
     }
 

@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, bigint, jsonb, pgSchema } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, bigint, jsonb, pgSchema, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 /**
@@ -107,7 +107,16 @@ export const accounts = pgTable("accounts", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-
-
-
-
+/**
+ * Idempotency Keys Table
+ */
+export const idempotencyKeys = pgTable("idempotency_keys", {
+	id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+	key: text("key").notNull(),
+	userId: uuid("user_id")
+		.notNull()
+		.references(() => authUsers.id, { onDelete: "cascade" }),
+	responseCode: integer("response_code").notNull(),
+	responseBody: jsonb("response_body").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+});

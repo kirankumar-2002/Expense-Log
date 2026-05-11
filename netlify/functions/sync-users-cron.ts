@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 
 /**
  * Netlify Scheduled Function
- * Cron: Every 2 hours (0 */2 * * *)
+ * Schedule: Every 2 hours
  */
 
 export default async (req: Request, context: Context) => {

@@ -4,7 +4,8 @@ import { verifyAuth } from "./lib/auth";
 import { successResponse, errorResponse } from "./lib/response";
 import { checkIdempotency } from "./lib/idempotency";
 import { db, sql } from "../../src/db";
-import { transactions, idempotencyKeys } from "../../src/db/schema";
+import { eq } from "drizzle-orm";
+import { transactions, categories, idempotencyKeys } from "../../src/db/schema";
 
 
 /**
@@ -14,8 +15,8 @@ const createTransactionSchema = z.object({
 	amount_cents: z.number().int().positive("Amount must be a positive integer in cents"),
 	category_id: z.string().uuid("Invalid category ID"),
 	description: z.string().max(255).optional(),
-	transaction_date: z.string().datetime({ message: "Invalid date format (ISO 8601 required)" }).optional(),
-	metadata: z.record(z.any()).optional(),
+	transaction_date: z.iso.datetime().optional(),
+	metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const handler: Handler = async (event) => {
@@ -41,7 +42,7 @@ export const handler: Handler = async (event) => {
 
 		if (!validatedData.success) {
 			return errorResponse(
-				validatedData.error.errors[0].message,
+				validatedData.error.issues[0].message,
 				"VALIDATION_ERROR",
 				422
 			);
@@ -54,16 +55,21 @@ export const handler: Handler = async (event) => {
 			// Set RLS Context
 			await tx.execute(sql`SELECT set_config('request.jwt.claims', ${JSON.stringify({ sub: user.id })}, true)`);
 
+			// Fetch category name to match schema
+			const [categoryRecord] = await tx
+				.select({ name: categories.name })
+				.from(categories)
+				.where(eq(categories.id, category_id))
+				.limit(1);
+
 			const [newTransaction] = await tx
 				.insert(transactions)
 				.values({
-					tenantId: user.id,
-					profileId: user.id,
-					categoryId: category_id,
+					userId: user.id,
 					amountCents: amount_cents,
-					description: description || null,
-					transactionDate: transaction_date ? new Date(transaction_date) : new Date(),
-					metadata: metadata || {},
+					category: categoryRecord?.name || "Uncategorized",
+					description: description || "",
+					date: transaction_date ? transaction_date.split('T')[0] : new Date().toISOString().split('T')[0],
 				})
 				.returning();
 			
