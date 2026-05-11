@@ -12,7 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import com.expenselogpro.app.ui.dashboard.DashboardScreen
+import com.expenselogpro.app.ui.webview.WebViewScreen
 import com.expenselogpro.app.ui.theme.ExpenseLogTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.Executor
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (isUnlocked) {
-                        DashboardScreen()
+                        WebViewScreen(url = "https://expenselogpro.netlify.app/")
                     } else {
                         // Background state while waiting for biometric
                         Surface(

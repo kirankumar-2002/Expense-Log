@@ -103,12 +103,12 @@ body {
   padding: 24px 16px 16px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
 }
 
 .sidebar-logo {
-  width: 54px;
-  height: 54px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,11 +123,14 @@ body {
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
-  transform: scale(1.5);
 }
 
 .sidebar-brand {
-  font-size: 20px;
+  width: 170px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 19px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.02em;
