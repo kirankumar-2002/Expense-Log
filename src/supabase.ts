@@ -39,7 +39,6 @@ async function supabaseFetch<T = any>(
     ...(options.headers as Record<string, string> || {})
   };
 
-  // We add x-user-id for the owner_only policy fallback, while still satisfying the prompt's token architecture.
   if (currentUserId) headers['x-user-id'] = currentUserId;
 
   const res = await fetch(url, {
@@ -49,8 +48,13 @@ async function supabaseFetch<T = any>(
 
   if (!res.ok) {
     const errorBody = await res.text();
-    console.error(`Supabase error [${res.status}] on ${table}:`, errorBody);
+    console.error(`❌ Supabase error [${res.status}] on ${table}:`, errorBody);
     throw new Error(`Supabase error: ${res.status} - ${errorBody}`);
+  }
+
+  // Handle 204 No Content
+  if (res.status === 204) {
+    return [] as any;
   }
 
   return res.json();
@@ -70,15 +74,17 @@ export async function sbInsertTransaction(record: any) {
   });
 }
 
-export async function sbUpdateTransaction(id: string, userId: string, record: any) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbUpdateTransaction(id: string, record: any, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'transactions')),
   });
 }
 
-export async function sbDeleteTransaction(id: string, userId: string) {
-  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbDeleteTransaction(id: string, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('transactions', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'DELETE',
   });
 }
@@ -97,15 +103,17 @@ export async function sbInsertOutstanding(record: any) {
   });
 }
 
-export async function sbUpdateOutstanding(id: string, userId: string, record: any) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbUpdateOutstanding(id: string, record: any, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'PATCH',
     body: JSON.stringify(mapRecordToRow(record, 'outstanding')),
   });
 }
 
-export async function sbDeleteOutstanding(id: string, userId: string) {
-  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbDeleteOutstanding(id: string, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('outstanding', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'DELETE',
   });
 }
@@ -124,15 +132,17 @@ export async function sbInsertAccount(record: any) {
   });
 }
 
-export async function sbUpdateAccount(id: string, userId: string, record: any) {
-  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbUpdateAccount(id: string, record: any, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'PATCH',
     body: JSON.stringify(mapAccountToRow(record)),
   });
 }
 
-export async function sbDeleteAccount(id: string, userId: string) {
-  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${userId}`, {
+export async function sbDeleteAccount(id: string, userId?: string) {
+  const uid = userId || currentUserId;
+  return supabaseFetch<any[]>('bank_accounts', `id=eq.${id}&user_id=eq.${uid}`, {
     method: 'DELETE',
   });
 }
