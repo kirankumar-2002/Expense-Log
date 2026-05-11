@@ -11,7 +11,7 @@ import SignIn from './SignIn';
 import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
 import { fetchTransactions, fetchOutstanding, saveTransaction, fetchAccounts } from './api';
-import { sbSyncProfile, setSupabaseToken, setSupabaseUser } from './supabase';
+import { setSupabaseToken, setSupabaseUser } from './supabase';
 import { 
   Plus, 
   Trash2, 
@@ -243,43 +243,22 @@ export default function App() {
             const data = userDoc.data();
             setUser({ ...u, ...data });
             setUserPlan(data.plan || 'free');
-            
-            // Check if userId is missing (for Google users who haven't set it)
-            if (!data.userId) {
-              const generatedId = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
-              await setDoc(userRef, { userId: generatedId }, { merge: true });
-              setUser({ ...u, ...data, userId: generatedId });
-              
-              // Sync to Supabase with new userId
-              sbSyncProfile(u, { ...data, userId: generatedId }).catch(console.error);
-            } else {
-              // Sync to Supabase with existing data
-              sbSyncProfile(u, data).catch(console.error);
-            }
           } else {
             // First time login (likely Google) - initialize basic profile
-            const generatedId = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
             const newUser = { 
               email: u.email, 
               name: u.displayName || '',
-              userId: generatedId,
               plan: 'free', 
               createdAt: new Date().toISOString() 
             };
             await setDoc(userRef, newUser);
             setUser({ ...u, ...newUser });
             setUserPlan('free');
-            
-            console.log('✅ User profile synced to Supabase.');
-            sbSyncProfile(u, newUser).catch(console.error);
           }
         } catch (err) {
           console.error("❌ Error fetching user data:", err);
           setUser(u);
           setUserPlan('free');
-          
-          console.log('⚠️ Fallback sync triggering...');
-          sbSyncProfile(u).catch(console.error);
         }
       } else {
         setSupabaseToken(null);
@@ -297,10 +276,9 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  // Force sync to Supabase when user state is first established (handles already-logged-in cases)
+  // Force session establishment when user state is first established (handles already-logged-in cases)
   useEffect(() => {
     if (user && !isAuthLoading) {
-      sbSyncProfile(auth.currentUser, user).catch(console.error);
       setIsPreviewMode(false);
       setShowAuthModal(false);
     }
@@ -348,8 +326,7 @@ export default function App() {
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-  const [showModal, setShowModal] = useState<'transaction' | 'outstanding' | 'account' | 'account-history' | 'set-userid' | null>(null);
-  const [newUserId, setNewUserId] = useState('');
+  const [showModal, setShowModal] = useState<'transaction' | 'outstanding' | 'account' | 'account-history' | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [historyMonth, setHistoryMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   
@@ -766,26 +743,7 @@ export default function App() {
     }
   };
 
-  const handleSetUserId = async () => {
-    if (!newUserId || !user) return;
-    setSyncing(true);
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, { userId: newUserId.toLowerCase() }, { merge: true });
-      const updatedUser = { ...user, userId: newUserId.toLowerCase() };
-      setUser(updatedUser);
-      
-      // Sync change to Supabase
-      sbSyncProfile(auth.currentUser, updatedUser).catch(console.error);
 
-      setShowModal(null);
-      showToast('User ID set successfully');
-    } catch (e) {
-      showToast('Failed to set User ID', 'error');
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleBulkStatusUpdate = async (type: 'Transactions' | 'Outstanding', newStatus: 'Pending' | 'Processed') => {
     const selected = type === 'Transactions' ? selectedTransactions : selectedOutstanding;
@@ -1958,18 +1916,7 @@ export default function App() {
                         <span className="profile-info-label">Email Address</span>
                         <span className="profile-info-value">{user?.email}</span>
                       </div>
-                      <div className="profile-info-item">
-                        <span className="profile-info-label">Username</span>
-                        <div className="flex items-center gap-3">
-                          <span className="profile-info-value font-mono text-indigo-600">@{user?.userId || 'not_set'}</span>
-                          <button 
-                            onClick={() => { setNewUserId(user?.userId || ''); setShowModal('set-userid'); }}
-                            className="btn btn-sm btn-ghost h-8 px-3 text-[10px] uppercase tracking-wider"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </div>
+
                     </div>
 
                     <div className="p-5 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/10 mt-10">
