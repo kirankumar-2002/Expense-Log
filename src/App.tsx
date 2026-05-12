@@ -1101,7 +1101,7 @@ export default function App() {
         
         {/* Dashboard */}
         <section className={cn("page-container", activePage === 'dashboard' && "active")}>
-          <div className="page-header flex-row items-center justify-between gap-4">
+          <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
               <div className="page-title">Current Month<span>.</span></div>
               <div className="page-sub">{dashboardStats.monthLabel} activity summary</div>
@@ -1198,14 +1198,13 @@ export default function App() {
 
         {/* Transactions */}
         <section className={cn("page-container", activePage === 'transactions' && "active")}>
-          <div className="page-header !flex !flex-col gap-4">
-            <div className="flex flex-row items-center justify-between gap-4 w-full">
+          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1">
                 <div className="page-title">Transactions<span>.</span></div>
                 <div className="page-sub">{filteredTransactions.length} entries found</div>
               </div>
               
-              <div className="flex gap-1 items-center">
+              <div className="flex gap-2 items-center flex-wrap justify-end">
                 {/* Desktop Only Add Entry */}
                 <button 
                   className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
@@ -1267,7 +1266,6 @@ export default function App() {
 
               </div>
             </div>
-
             {isEditingTransactions && (
               <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2">
                 <button 
@@ -1295,7 +1293,6 @@ export default function App() {
                 </button>
               </div>
             )}
-          </div>
           <div className="table-card overflow-hidden">
              {(showSearch || showFilters) && (
                <div id="transaction-toolbar" className="table-toolbar flex flex-col gap-1.5 p-2 md:p-3 border-b border-border/40 bg-surface/30">
@@ -1430,14 +1427,13 @@ export default function App() {
 
         {/* Outstanding */}
         <section className={cn("page-container", activePage === 'outstanding' && "active")}>
-          <div className="page-header !flex !flex-col gap-6 md:gap-8 mb-8">
-            <div className="flex flex-row items-center justify-between gap-4 w-full">
+          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4 w-full">
               <div className="flex-1">
                 <div className="page-title text-2xl md:text-3xl font-black tracking-tight">Outstanding<span>.</span></div>
                 <div className="page-sub text-xs md:text-sm font-semibold tracking-tight text-muted/80">{filteredOutstanding.length} {outTab.toLowerCase()} entries found</div>
               </div>
               
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap justify-end">
                 {/* Desktop Only Add Entry */}
                 <button 
                   className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[40px] px-4 shadow-glow" 
@@ -1488,7 +1484,6 @@ export default function App() {
                 </button>
               </div>
             </div>
-
             {isEditingOutstanding && (
               <div className="edit-toolbar-container animate-in fade-in slide-in-from-top-2 mx-0 w-full max-w-full">
                 <button 
@@ -1525,7 +1520,7 @@ export default function App() {
                     key={tab}
                     onClick={() => setOutTab(tab as any)}
                     className={cn(
-                      "relative flex-1 min-h-[48px] rounded-full text-sm font-bold uppercase tracking-widest z-10 transition-colors duration-300",
+                      "relative flex-1 min-h-[48px] rounded-full text-xs md:text-sm font-bold uppercase tracking-wider z-10 transition-colors duration-300",
                       outTab === tab ? "text-white" : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                     )}
                   >
@@ -1682,12 +1677,12 @@ export default function App() {
         {/* Monthly (Timeline) */}
         <section className={cn("page-container", activePage === 'monthly' && "active")}>
           <div className="page-header flex flex-col gap-4">
-            <div className="flex flex-row items-center justify-between gap-4 w-full">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
               <div>
                 <div className="page-title">Monthly<span>.</span></div>
                 <div className="page-sub">Historical flow overview</div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
                 {userPlan === 'free' ? (
                   <button 
                     onClick={() => setIsUpgradeModalOpen(true)}
@@ -1743,7 +1738,7 @@ export default function App() {
                 <div className="page-title">Accounts<span>.</span></div>
                 <div className="page-sub">Bank accounts & credit cards</div>
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center flex-wrap justify-end">
                 <select className="filter-select min-w-[120px]" value={accFilterMonth} onChange={e => setAccFilterMonth(e.target.value)}>
                   {past10Months.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
