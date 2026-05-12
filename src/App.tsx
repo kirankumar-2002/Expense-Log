@@ -952,7 +952,10 @@ export default function App() {
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 mobile-header-logo">
               <Landmark size={16} />
             </div>
-            <span className="font-bold text-sm text-[var(--text)] mobile-header-text">Expense Log Pro</span>
+            <span className="font-bold text-sm text-[var(--text)] mobile-header-text">
+              {activePage === 'dashboard' ? 'Expense Log Pro' : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
+            </span>
+
           </div>
         </div>
       </header>
@@ -1101,7 +1104,8 @@ export default function App() {
         
         {/* Dashboard */}
         <section className={cn("page-container", activePage === 'dashboard' && "active")}>
-          <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="page-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-1">
+
             <div className="flex-1">
               <div className="page-title">Current Month<span>.</span></div>
               <div className="page-sub">{dashboardStats.monthLabel} activity summary</div>
@@ -1198,7 +1202,8 @@ export default function App() {
 
         {/* Transactions */}
         <section className={cn("page-container", activePage === 'transactions' && "active")}>
-          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4">
+          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4 px-1">
+
               <div className="flex-1">
                 <div className="page-title">Transactions<span>.</span></div>
                 <div className="page-sub">{filteredTransactions.length} entries found</div>
@@ -1427,7 +1432,8 @@ export default function App() {
 
         {/* Outstanding */}
         <section className={cn("page-container", activePage === 'outstanding' && "active")}>
-          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4 w-full">
+          <div className="page-header !flex !flex-col sm:!flex-row items-start sm:items-center justify-between gap-4 w-full px-1">
+
               <div className="flex-1">
                 <div className="page-title text-2xl md:text-3xl font-black tracking-tight">Outstanding<span>.</span></div>
                 <div className="page-sub text-xs md:text-sm font-semibold tracking-tight text-muted/80">{filteredOutstanding.length} {outTab.toLowerCase()} entries found</div>
@@ -1535,7 +1541,6 @@ export default function App() {
                     <span className="relative z-20">{tab}</span>
                   </button>
                 ))}
-              </div>
             </div>
           </div>
 
