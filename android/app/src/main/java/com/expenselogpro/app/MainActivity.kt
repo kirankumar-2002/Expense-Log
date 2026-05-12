@@ -24,17 +24,13 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var biometricPrompt: BiometricPrompt
-    private lateinit var promptInfo: BiometricPrompt.PromptInfo
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        var isUnlocked by mutableStateOf(false)
-
-        setupBiometric { isUnlocked = true }
-
         setContent {
+            var isUnlocked by remember { mutableStateOf(false) }
+
             MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -55,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         LaunchedEffect(Unit) {
-                            showBiometricPrompt()
+                            showBiometricPrompt { isUnlocked = true }
                         }
                     }
                 }
@@ -63,52 +59,52 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupBiometric(onSuccess: () -> Unit) {
-        val executor = ContextCompat.getMainExecutor(this)
-        biometricPrompt = BiometricPrompt(this, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
-                    // If biometric is not available, just unlock
-                    if (errorCode == BiometricPrompt.ERROR_NO_BIOMETRICS ||
-                        errorCode == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
-                        errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE
-                    ) {
-                        onSuccess()
-                    } else {
-                        Toast.makeText(applicationContext, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    onSuccess()
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    Toast.makeText(applicationContext, "Authentication failed", Toast.LENGTH_SHORT).show()
-                }
-            })
-
-        promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Expense Log Pro")
-            .setSubtitle("Verify your identity to continue")
-            .setNegativeButtonText("Cancel")
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
-            .build()
-    }
-
-    private fun showBiometricPrompt() {
+    private fun showBiometricPrompt(onSuccess: () -> Unit) {
         val biometricManager = BiometricManager.from(this)
-        when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)) {
-            BiometricManager.BIOMETRIC_SUCCESS -> {
-                biometricPrompt.authenticate(promptInfo)
-            }
-            else -> {
-                // Device doesn't support biometric — skip straight to app
-                // This avoids crashes on emulators or devices without biometric hardware
-            }
+        val canAuthenticate = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+        )
+
+        if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
+            val executor = ContextCompat.getMainExecutor(this)
+            val biometricPrompt = BiometricPrompt(this, executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        // If biometric is not available or has hardware issues, just unlock
+                        if (errorCode == BiometricPrompt.ERROR_NO_BIOMETRICS ||
+                            errorCode == BiometricPrompt.ERROR_HW_NOT_PRESENT ||
+                            errorCode == BiometricPrompt.ERROR_HW_UNAVAILABLE ||
+                            errorCode == BiometricPrompt.ERROR_SECURITY_UPDATE_REQUIRED
+                        ) {
+                            onSuccess()
+                        } else {
+                            Toast.makeText(applicationContext, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        onSuccess()
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                        Toast.makeText(applicationContext, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    }
+                })
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Expense Log Pro")
+                .setSubtitle("Verify your identity to continue")
+                .setNegativeButtonText("Cancel")
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK)
+                .build()
+
+            biometricPrompt.authenticate(promptInfo)
+        } else {
+            // Device doesn't support biometric or it's not set up — skip straight to app
+            onSuccess()
         }
     }
 }
