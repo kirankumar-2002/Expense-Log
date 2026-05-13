@@ -1794,6 +1794,9 @@ input:checked + .slider:before {
     white-space: nowrap;
     padding: 8px 16px;
   }
+  .settings-nav-item-internal:hover {
+    transform: none;
+  }
   .settings-nav-item-internal .chevron {
     display: none;
   }

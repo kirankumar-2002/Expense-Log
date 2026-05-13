@@ -45,7 +45,6 @@ import {
   CreditCard,
   X,
   AtSign,
-  Settings,
   User,
   Bell,
   Shield,
@@ -320,7 +319,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
   const [outTab, setOutTab] = useState<'Payable' | 'Receivable'>('Payable');
-  const [settingsTab, setSettingsTab] = useState<'profile' | 'subscription' | 'wallet' | 'preferences' | 'help' | 'about'>('profile');
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'subscription' | 'wallet' | 'monthly' | 'preferences' | 'help' | 'about'>('profile');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
@@ -403,8 +402,9 @@ export default function App() {
   const [outFilterMonth, setOutFilterMonth] = useState('');
   const [outFilterCat, setOutFilterCat] = useState('');
   const [outFilterSubCat, setOutFilterSubCat] = useState('');
-  
   const [accFilterMonth, setAccFilterMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
+  
+
   
   const [filterState, setFilterState] = useState('Payable');
 
@@ -1079,9 +1079,7 @@ export default function App() {
           <NavItem active={activePage === 'dashboard'} onClick={() => { setActivePage('dashboard'); setMobileSidebarOpen(false); }} icon={<LayoutDashboard size={18} />} label="Dashboard" collapsed={false} />
           <NavItem active={activePage === 'transactions'} onClick={() => { setActivePage('transactions'); setMobileSidebarOpen(false); }} icon={<ArrowRightLeft size={18} />} label="Transactions" collapsed={false} />
           <NavItem active={activePage === 'outstanding'} onClick={() => { setActivePage('outstanding'); setMobileSidebarOpen(false); }} icon={<Clock size={18} />} label="Outstanding" collapsed={false} />
-          <NavItem active={activePage === 'monthly'} onClick={() => { setActivePage('monthly'); setMobileSidebarOpen(false); }} icon={<BarChart3 size={18} />} label="Monthly" collapsed={false} />
-          <NavItem active={activePage === 'accounts'} onClick={() => { setActivePage('accounts'); setMobileSidebarOpen(false); }} icon={<Landmark size={18} />} label="Accounts" collapsed={false} />
-          <NavItem active={activePage === 'settings'} onClick={() => { setActivePage('settings'); setMobileSidebarOpen(false); }} icon={<Settings size={18} />} label="Settings" collapsed={false} />
+          <NavItem active={activePage === 'profile'} onClick={() => { setActivePage('profile'); setMobileSidebarOpen(false); }} icon={<User size={18} />} label="Profile" collapsed={false} />
         </nav>
         
         <div className="sidebar-footer">
@@ -1679,181 +1677,14 @@ export default function App() {
           </div>
         </section>
 
-        {/* Monthly (Timeline) */}
-        <section className={cn("page-container", activePage === 'monthly' && "active")}>
-          <div className="page-header flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-              <div>
-                <div className="page-title">Monthly<span>.</span></div>
-                <div className="page-sub">Historical flow overview</div>
-              </div>
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
-                {userPlan === 'free' ? (
-                  <button 
-                    onClick={() => setIsUpgradeModalOpen(true)}
-                    className="btn btn-sm bg-amber-400/10 text-amber-400 border border-amber-400/20 flex items-center gap-2 px-3 hover:bg-amber-400/20 transition-all"
-                  >
-                    <Crown size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Advanced Insights</span>
-                    <Lock size={12} />
-                  </button>
-                ) : (
-                  <button className="btn btn-sm bg-emerald-400/10 text-emerald-400 border border-emerald-400/20 flex items-center gap-2 px-3">
-                    <Gem size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">PRO Analytics Active</span>
-                  </button>
-                )}
-                <select className="filter-select w-24 h-9" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
-                  {Array.from(new Set([...months.map(m => m.split('-')[0]), new Date().getFullYear().toString()])).sort((a,b) => b.localeCompare(a)).map(y => <option key={y} value={y}>{y}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
-          <div className="month-grid">
-            {months.filter(m => m.startsWith(filterYear)).map((m, idx) => {
-              const recs = transactions.filter(r => r.Date.startsWith(m));
-              const exp = recs.filter(r => r.Category === 'Expenses').reduce((s, r) => s + r.Amount, 0);
-              const inc = recs.filter(r => r.Category === 'Income').reduce((s, r) => s + r.Amount, 0);
-              return (
-                <div key={`${m}-${idx}`} className="month-card cursor-pointer hover:border-accent/40 hover:bg-surface/50 transition-colors" onClick={() => { setFilterMonth(m); setActivePage('transactions'); }}>
-                  <div className="month-name">
-                    {(() => {
-                      const dt = parseISO(m + '-01');
-                      return isValid(dt) ? format(dt, 'MMM yyyy') : m;
-                    })()}
-                  </div>
-                  <div className="month-bar-wrap">
-                    <div className="month-bar" style={{ width: `${Math.min(100, (exp / (inc || 1) * 100))}%` }} />
-                  </div>
-                  <div className="month-stats">
-                    <div className="month-stat"><div className="val text-accent">{fmt(exp)}</div><div className="lbl">Exp</div></div>
-                    <div className="month-stat"><div className="val text-accent2">{fmt(inc)}</div><div className="lbl">Inc</div></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
 
-        {/* Accounts */}
-        <section className={cn("page-container", activePage === 'accounts' && "active")}>
-          <div className="page-header flex flex-col gap-4">
-            <div className="flex flex-row items-center justify-between gap-4 w-full">
-              <div className="flex-1">
-                <div className="page-title">Accounts<span>.</span></div>
-                <div className="page-sub">Bank accounts & credit cards</div>
-              </div>
-              <div className="flex gap-2 items-center flex-wrap justify-end">
-                <select className="filter-select min-w-[120px]" value={accFilterMonth} onChange={e => setAccFilterMonth(e.target.value)}>
-                  {past10Months.map(m => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
-              <button 
-                className="hidden md:flex btn btn-primary btn-sm items-center justify-center min-w-[36px] px-3" 
-                onClick={() => { 
-                  setEditId(null); 
-                  setFormData({
-                    ...formData,
-                    date: new Date().toISOString().slice(0, 10),
-                    name: '', type: 'Current', balance: ''
-                  });
-                  setShowModal('account'); 
-                }}
-                title="Add Account"
-              >
-                <Plus size={16} />
-                <span className="hidden md:inline ml-1">Add Account</span>
-              </button>
-              {!isEditingAccounts && (
-                <button
-                  className="flex btn items-center justify-center w-9 md:w-auto p-0 md:px-4 rounded-xl shadow-sm transition-all focus:outline-none flex-shrink-0 bg-[#c84b2f] hover:brightness-110 text-white border-0"
-                  onClick={() => setIsEditingAccounts(true)}
-                  title="Edit Accounts"
-                >
-                  <Edit3 size={16} className="md:hidden flex-shrink-0" /><span className="hidden md:inline font-semibold">Edit</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-          <div className="table-card overflow-hidden">
-            <div className="table-scroll">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left border-b border-border">
-                    <th className="py-3 px-4">Name</th>
-                    <th className="py-3 px-4 text-right">Current</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {accounts.length > 0 ? (
-                    accounts.map((acc, i) => {
-                      const name = acc.name;
-                      return (
-                        <tr 
-                          key={`acc-row-${acc.id || i}`} 
-                          className="border-b border-border/40 hover:bg-surface/50 transition-colors cursor-pointer"
-                          onClick={() => {
-                            if (isEditingAccounts) {
-                              setEditId(acc.id || null);
-                              setFormData({
-                                ...formData,
-                                name, 
-                                type: acc.type || 'Current', 
-                                balance: String(acc.balance || '0'), 
-                                month: format(new Date(), 'yyyy-MM')
-                              });
-                              setShowModal('account');
-                            } else {
-                              setSelectedAccount(name);
-                              setHistoryMonth(format(new Date(), 'yyyy-MM'));
-                              setShowModal('account-history');
-                            }
-                          }}
-                        >
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              {isEditingAccounts && <Edit3 size={16} className="text-accent" />}
-                              <div>
-                                <div className="font-bold text-sm text-text">{name}</div>
-                                <div className="text-[10px] text-muted uppercase font-medium">{acc.type || 'Current'}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 text-right font-mono font-bold text-sm text-accent2">
-                            {(() => {
-                              const accTx = transactions.filter(r => r.Accounts === name && r.Date.startsWith(accFilterMonth));
-                              let currentMonthBalance = Number(acc.balance) || 0;
-                              accTx.forEach(r => {
-                                if (r.Category === 'Income') currentMonthBalance += r.Amount;
-                                else currentMonthBalance -= r.Amount;
-                              });
-                              return fmt(currentMonthBalance);
-                            })()}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={2} className="py-12 text-center text-muted italic text-sm">
-                        No bank accounts found. Click "Add Account" to get started.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
 
-        {/* Settings / Account */}
-        <section className={cn("page-container", activePage === 'settings' && "active")}>
+        {/* Profile (Formerly Settings) */}
+        <section className={cn("page-container", activePage === 'profile' && "active")}>
           <div className="page-header">
             <div>
-              <div className="page-title">Account Settings<span>.</span></div>
-              <div className="page-sub">Manage your profile, subscription and app preferences</div>
+              <div className="page-title">Profile<span>.</span></div>
+              <div className="page-sub">Manage your profile, finances and app preferences</div>
             </div>
           </div>
 
@@ -1874,7 +1705,12 @@ export default function App() {
                 <div className="settings-nav-group-title">Account</div>
                 <SettingsInternalNavItem active={settingsTab === 'profile'} onClick={() => setSettingsTab('profile')} icon={<User size={18} />} label="Profile" />
                 <SettingsInternalNavItem active={settingsTab === 'subscription'} onClick={() => setSettingsTab('subscription')} icon={<Crown size={18} />} label="Subscription" badge={userPlan === 'premium' ? "Pro" : "Free"} />
+              </div>
+
+              <div className="settings-nav-group">
+                <div className="settings-nav-group-title">Finances</div>
                 <SettingsInternalNavItem active={settingsTab === 'wallet'} onClick={() => setSettingsTab('wallet')} icon={<Wallet size={18} />} label="Wallet" />
+                <SettingsInternalNavItem active={settingsTab === 'monthly'} onClick={() => setSettingsTab('monthly')} icon={<BarChart3 size={18} />} label="Monthly" />
               </div>
 
               <div className="settings-nav-group">
@@ -1999,72 +1835,151 @@ export default function App() {
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="settings-page-header">
                     <div className="settings-section-icon"><Wallet size={20} /></div>
-                    <h2 className="settings-page-title">Digital <span>Wallet</span></h2>
+                    <h2 className="settings-page-title">My <span>Wallets</span></h2>
+                  </div>
+                  
+                  <div className="flex justify-end mb-6">
+                    <button 
+                      className="btn btn-primary btn-sm flex items-center justify-center gap-2 px-4 h-10 shadow-lg shadow-indigo-500/20" 
+                      onClick={() => { 
+                        setEditId(null); 
+                        setFormData({
+                          ...formData,
+                          date: new Date().toISOString().slice(0, 10),
+                          name: '', type: 'Current', balance: '0'
+                        });
+                        setShowModal('account'); 
+                      }}
+                    >
+                      <Plus size={16} />
+                      <span>Add Wallet</span>
+                    </button>
                   </div>
 
-                  <div className="flex flex-col gap-10">
-                    <section>
-                      <div className="mb-4">
-                        <h3 className="text-lg font-800 text-text">Bank Accounts</h3>
-                        <p className="text-sm text-muted">Add bank accounts to sync your balances manually or automatically.</p>
-                      </div>
-                      <div className="wallet-card-list">
-                        {accounts.filter(a => a.type !== 'Credit').map((acc, i) => {
-                          const name = acc.name;
-                          const type = acc.type || 'Current';
-                          const balance = acc.balance || 0;
-                          return (
-                            <div key={acc.id || i} className="wallet-item-card">
-                              <div className="flex items-center gap-4 min-w-0">
-                                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
-                                  <Landmark size={20} />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="font-bold text-sm truncate">{name}</div>
-                                  <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">{type} Account</div>
-                                </div>
-                              </div>
-                              <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(balance)}</div>
-                            </div>
-                          );
-                        })}
-                        {accounts.filter(a => a.type !== 'Credit').length === 0 && (
-                          <div className="py-8 text-center text-muted italic text-sm border border-dashed border-border/60 rounded-3xl mb-4">
-                            No bank accounts linked.
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {accounts.map((acc, i) => {
+                      const name = acc.name;
+                      const type = acc.type || 'Current';
+                      
+                      const accTransactions = transactions.filter(t => t.Accounts === name);
+                      const accOutstanding = outstanding.filter(o => o.Accounts === name);
+                      
+                      let currentBalance = Number(acc.balance) || 0;
+                      accTransactions.forEach(t => {
+                        if (t.Category === 'Income') currentBalance += t.Amount;
+                        else currentBalance -= t.Amount;
+                      });
+                      accOutstanding.forEach(o => {
+                        if (o.State === 'Receivable') currentBalance += o.Amount;
+                        else if (o.State === 'Payable') currentBalance -= o.Amount;
+                      });
+
+                      return (
+                        <div 
+                          key={acc.id || i} 
+                          className="group relative bg-surface border border-border rounded-[2.5rem] p-7 hover:border-indigo-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/5 cursor-pointer overflow-hidden flex flex-col justify-between min-h-[240px]"
+                          onClick={() => {
+                            setEditId(acc.id || null);
+                            setFormData({
+                              ...formData,
+                              name, 
+                              type: acc.type || 'Current', 
+                              balance: String(acc.balance || '0'), 
+                              month: format(new Date(), 'yyyy-MM')
+                            });
+                            setShowModal('account');
+                          }}
+                        >
+                          <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Edit3 size={18} className="text-indigo-500" />
                           </div>
-                        )}
-                        <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Current' }); setShowModal('account'); }}>
-                          <Plus size={18} /> Add bank account
-                        </button>
-                      </div>
-
-                    </section>
-
-                    <section>
-                      <div className="mb-4">
-                        <h3 className="text-lg font-800 text-text">Assigned Cards</h3>
-                        <p className="text-sm text-muted">Manage your credit and debit cards for easy expense logging.</p>
-                      </div>
-                      <div className="wallet-card-list">
-                        {accounts.filter(a => a.type === 'Credit').map((acc, i) => (
-                          <div key={i} className="wallet-item-card">
-                            <div className="flex items-center gap-4 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-border shadow-sm text-indigo-600 flex-shrink-0">
-                                <CreditCard size={20} />
+                          
+                          <div>
+                            <div className="flex items-center gap-4 mb-6">
+                              <div className={cn(
+                                "w-12 h-12 rounded-2xl flex items-center justify-center border border-border shadow-sm transition-transform group-hover:scale-110 duration-500",
+                                type === 'Credit' ? "bg-rose-500/10 text-rose-500" : "bg-indigo-500/10 text-indigo-500"
+                              )}>
+                                {type === 'Credit' ? <CreditCard size={20} /> : <Landmark size={20} />}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-sm truncate">{acc.name}</div>
-                                <div className="text-[10px] text-muted uppercase font-bold tracking-wider truncate">Credit Card</div>
+                                <div className="font-800 text-base text-text tracking-tight truncate">{name}</div>
+                                <div className="text-[9px] font-bold text-muted uppercase tracking-[0.2em]">{type}</div>
                               </div>
                             </div>
-                            <div className="font-mono font-bold text-sm text-indigo-600 ml-4 flex-shrink-0">{fmt(acc.balance)}</div>
+
+                            <div className="space-y-1">
+                              <div className="text-[9px] font-bold text-muted uppercase tracking-[0.2em]">Balance</div>
+                              <div className={cn(
+                                "text-2xl font-800 tracking-tighter",
+                                currentBalance < 0 ? "text-rose-500" : "text-text"
+                              )}>
+                                {fmt(currentBalance)}
+                              </div>
+                            </div>
                           </div>
-                        ))}
-                        <button className="wallet-add-btn" onClick={() => { setEditId(null); setFormData({ ...formData, type: 'Credit' }); setShowModal('account'); }}>
-                          <Plus size={18} /> Add personal card
-                        </button>
+
+                          <div className="pt-4 border-t border-border/40 flex items-center justify-between mt-auto">
+                            <div className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Details →</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {accounts.length === 0 && (
+                      <div className="col-span-full py-12 text-center bg-surface/50 border-2 border-dashed border-border rounded-[2.5rem]">
+                        <div className="w-12 h-12 bg-muted/10 text-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Wallet size={24} />
+                        </div>
+                        <div className="font-bold text-text mb-1">No Wallets</div>
+                        <div className="text-sm text-muted">Add your first bank account.</div>
                       </div>
-                    </section>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'monthly' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="settings-page-header">
+                    <div className="settings-section-icon"><BarChart3 size={20} /></div>
+                    <h2 className="settings-page-title">Monthly <span>Overview</span></h2>
+                  </div>
+
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="text-sm text-muted font-medium">Historical flow analytics</div>
+                    <select className="filter-select w-24 h-9" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                      {Array.from(new Set([...months.map(m => m.split('-')[0]), new Date().getFullYear().toString()])).sort((a,b) => b.localeCompare(a)).map(y => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {months.filter(m => m.startsWith(filterYear)).map((m, idx) => {
+                      const recs = transactions.filter(r => r.Date.startsWith(m));
+                      const exp = recs.filter(r => r.Category === 'Expenses').reduce((s, r) => s + r.Amount, 0);
+                      const inc = recs.filter(r => r.Category === 'Income').reduce((s, r) => s + r.Amount, 0);
+                      return (
+                        <div key={`${m}-${idx}`} className="p-5 rounded-3xl border border-border bg-surface hover:border-indigo-500/30 transition-all cursor-pointer" onClick={() => { setFilterMonth(m); setActivePage('transactions'); }}>
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="font-bold text-sm">
+                              {(() => {
+                                const dt = parseISO(m + '-01');
+                                return isValid(dt) ? format(dt, 'MMM yyyy') : m;
+                              })()}
+                            </div>
+                            {userPlan === 'free' && <Lock size={12} className="text-muted" />}
+                          </div>
+                          
+                          <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
+                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, (exp / (inc || 1) * 100))}%` }} />
+                          </div>
+
+                          <div className="flex justify-between">
+                            <div className="text-[10px]"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Exp</span><span className="text-accent font-mono font-bold">{fmt(exp)}</span></div>
+                            <div className="text-[10px] text-right"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Inc</span><span className="text-accent2 font-mono font-bold">{fmt(inc)}</span></div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -2208,6 +2123,7 @@ export default function App() {
             <div className="flex justify-between items-center mb-6">
               <div className="modal-title m-0">
                 {showModal === 'account-history' ? `${selectedAccount} History` : 
+                  showModal === 'account' ? `${editId ? 'Edit' : 'Add'} Wallet` :
                   `${editId ? 'Edit' : 'Add'} ${showModal.charAt(0).toUpperCase() + showModal.slice(1)}`}
               </div>
                 <button className="text-muted hover:text-text p-2 -mr-2" onClick={() => setShowModal(null)}><X size={18} /></button>
@@ -2215,21 +2131,21 @@ export default function App() {
             
             {showModal === 'account' ? (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="form-group">
-                    <label className="form-label">Name</label>
-                    <input className="form-input" placeholder="e.g. Primary Savings" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Type</label>
-                    <select className="form-input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}>
-                      <option>Current</option><option>Savings</option><option>Credit</option>
-                    </select>
-                  </div>
+                <div className="form-group">
+                  <label className="form-label">Bank Name</label>
+                  <input className="form-input" placeholder="e.g. Primary Savings" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Current Balance (₹)</label>
-                  <input className="form-input" type="number" placeholder="" value={formData.balance} onChange={e => setFormData({ ...formData, balance: e.target.value })} />
+                  <label className="form-label">Account Type</label>
+                  <select className="form-input" value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value as any })}>
+                    <option>Current</option>
+                    <option>Savings</option>
+                    <option>Credit</option>
+                  </select>
+                </div>
+                <div className="p-4 bg-muted/10 rounded-2xl border border-border/40">
+                  <div className="text-[10px] font-bold text-muted uppercase tracking-widest mb-1">Note</div>
+                  <div className="text-xs text-muted leading-relaxed">Balance is automatically calculated based on your transactions and outstanding entries.</div>
                 </div>
               </div>
             ) : showModal === 'account-history' ? (
@@ -2363,19 +2279,34 @@ export default function App() {
 
       {/* Floating Action Button for Mobile */}
       <div className="md:hidden">
-        {['transactions', 'dashboard', 'monthly', 'accounts'].includes(activePage) && (
+        {(['transactions', 'dashboard'].includes(activePage) || (activePage === 'profile' && ['wallet', 'monthly'].includes(settingsTab))) && (
           <button 
             className="fab"
             onClick={() => {
-              if (activePage === 'accounts') {
+              if (activePage === 'profile' && settingsTab === 'wallet') {
                 setEditId(null); 
                 setFormData({
                   ...formData,
                   date: new Date().toISOString().slice(0, 10),
-                  amount: '',
-                  name: '', bank: '', type: 'Current', balance: ''
+                  name: '', type: 'Current', balance: '0'
                 });
                 setShowModal('account'); 
+              } else if (activePage === 'profile' && settingsTab === 'monthly') {
+                setEditId(null);
+                setFormData({
+                  ...formData,
+                  date: lastEnteredTxDate,
+                  amount: '',
+                  category: 'Expenses',
+                  subCategory: CATEGORY_MAP_T['Expenses'][0],
+                  desc: '',
+                  notes: '',
+                  Accounts: ACCOUNTS_LIST[0],
+                  state: 'Payable',
+                  status: 'Pending',
+                  name: '', bank: '', type: 'Current', balance: ''
+                });
+                setShowModal('transaction');
               } else {
                 setEditId(null);
                 setFormData({
