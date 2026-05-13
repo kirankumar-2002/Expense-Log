@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo, ReactNode } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, ReactNode } from 'react';
 import { auth, db, setAnalyticsUserPlan, logAnalyticsEvent } from './firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
@@ -56,8 +56,7 @@ import {
   Languages,
   ArrowDownLeft,
   ArrowRight,
-  UserPlus,
-  MoreVertical
+  UserPlus
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -319,7 +318,18 @@ export default function App() {
 
 
   const [syncing, setSyncing] = useState(false);
-  const [activePage, setActivePage] = useState<PageView>('dashboard');
+  const [activePage, setActivePageRaw] = useState<PageView>('dashboard');
+  const previousPageRef = useRef<PageView>('dashboard');
+  const profilePhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // Track previous page for back navigation
+  const setActivePage = useCallback((page: PageView) => {
+    setActivePageRaw(prev => {
+      previousPageRef.current = prev;
+      return page;
+    });
+  }, []);
+
   const [outTab, setOutTab] = useState<'Payable' | 'Receivable'>('Payable');
   const [profileTab, setProfileTab] = useState<'overview' | 'account' | 'subscription' | 'wallet' | 'monthly' | 'preferences' | 'help' | 'about'>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -941,26 +951,7 @@ export default function App() {
 
   return (
     <div className={cn("app-wrapper", isPreviewMode && "isPreviewMode", showAuthModal && "modal-open")}>
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[var(--bg)]/90 backdrop-blur-lg z-[80] flex items-center px-4 justify-between border-b border-[var(--border)] shadow-sm">
-        <div className="flex items-center gap-3">
-          <button 
-            className="p-2 rounded-xl bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] mobile-header-btn"
-            onClick={() => setMobileSidebarOpen(true)}
-          >
-            <Menu size={16} />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 mobile-header-logo">
-              <Landmark size={16} />
-            </div>
-            <span className="font-bold text-sm text-[var(--text)] mobile-header-text">
-              {activePage === 'dashboard' ? 'Expense Log Pro' : activePage.charAt(0).toUpperCase() + activePage.slice(1)}
-            </span>
 
-          </div>
-        </div>
-      </header>
 
       {/* Sidebar Overlay */}
       <div 
@@ -1688,23 +1679,51 @@ export default function App() {
             <div className="settings-page animate-in fade-in duration-300">
               {/* Settings Header */}
               <div className="settings-header">
-                <button className="settings-header-btn" onClick={() => setActivePage('dashboard')}>
+                <button className="settings-header-btn" onClick={() => setActivePage(previousPageRef.current || 'dashboard')}>
                   <ChevronLeft size={22} />
                 </button>
                 <span className="settings-header-title">Profile Settings</span>
-                <button className="settings-header-btn">
-                  <MoreVertical size={20} />
-                </button>
+                {/* Spacer to keep title centered */}
+                <div style={{ width: 40 }} />
               </div>
+
+              {/* Hidden file input for profile photo */}
+              <input
+                ref={profilePhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !auth.currentUser) return;
+                  try {
+                    // Create a local preview URL
+                    const previewUrl = URL.createObjectURL(file);
+                    // Update Firebase Auth profile photoURL
+                    await updateProfile(auth.currentUser, { photoURL: previewUrl });
+                    setUser((prev: any) => ({ ...prev, photoURL: previewUrl }));
+                    setToast({ msg: 'Profile photo updated!', type: 'success' });
+                  } catch (err) {
+                    console.error('Failed to update profile photo:', err);
+                    setToast({ msg: 'Failed to update photo', type: 'error' });
+                  }
+                  // Reset input so same file can be re-selected
+                  e.target.value = '';
+                }}
+              />
 
               <div className="settings-scroll">
                 {/* Profile Avatar Card */}
                 <div className="settings-profile-card">
                   <div className="settings-avatar-wrap">
-                    <div className="settings-avatar">
-                      {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
-                    <button className="settings-avatar-edit">
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="Profile" className="settings-avatar" style={{ objectFit: 'cover' }} />
+                    ) : (
+                      <div className="settings-avatar">
+                        {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <button className="settings-avatar-edit" onClick={() => profilePhotoInputRef.current?.click()}>
                       <Edit3 size={13} />
                     </button>
                   </div>
@@ -1792,7 +1811,28 @@ export default function App() {
                     <Plus size={18} className="settings-action-chevron" />
                   </button>
 
-                  <button className="settings-action-row" onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}>
+                  <button className="settings-action-row" onClick={async () => {
+                    if (isPreviewMode) {
+                      setShowAuthModal(true);
+                    } else {
+                      try {
+                        await signOut(auth);
+                        // Clear all local state
+                        setTransactions([]);
+                        setOutstanding([]);
+                        setAccounts([]);
+                        setProfileTab('overview');
+                        setActivePage('dashboard');
+                        setSupabaseToken(null);
+                        setSupabaseUser(null);
+                        localStorage.removeItem('supabase_token');
+                        setToast({ msg: 'Signed out successfully', type: 'success' });
+                      } catch (err) {
+                        console.error('Sign out error:', err);
+                        setToast({ msg: 'Failed to sign out', type: 'error' });
+                      }
+                    }
+                  }}>
                     <div className="settings-row-icon signout">
                       <LogOut size={18} />
                     </div>
