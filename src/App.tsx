@@ -55,7 +55,9 @@ import {
   Globe,
   Languages,
   ArrowDownLeft,
-  ArrowRight
+  ArrowRight,
+  UserPlus,
+  MoreVertical
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -149,11 +151,11 @@ const fmtDate = (d: string) => {
 
 type SortConfig = { key: string; direction: 'asc' | 'desc' };
 
-function SettingsInternalNavItem({ active, onClick, icon, label, badge }: { active: boolean, onClick: () => void, icon: ReactNode, label: string, badge?: string }) {
+function ProfileInternalNavItem({ active, onClick, icon, label, badge }: { active: boolean, onClick: () => void, icon: ReactNode, label: string, badge?: string }) {
   return (
     <button 
       onClick={onClick}
-      className={cn("settings-nav-item-internal", active && "active")}
+      className={cn("profile-nav-item-internal", active && "active")}
     >
       <div className="nav-icon-wrap">
         <span className="nav-icon">{icon}</span>
@@ -167,14 +169,14 @@ function SettingsInternalNavItem({ active, onClick, icon, label, badge }: { acti
   );
 }
 
-function SettingsItemLink({ icon, label, value }: { icon: ReactNode, label: string, value: string }) {
+function ProfileItemLink({ icon, label, value }: { icon: ReactNode, label: string, value: string }) {
   return (
-    <div className="settings-option py-6 group cursor-pointer">
-      <div className="settings-nav-item-internal border-none p-0 w-full hover:bg-transparent">
+    <div className="profile-option py-6 group cursor-pointer">
+      <div className="profile-nav-item-internal border-none p-0 w-full hover:bg-transparent">
         <div className="nav-icon-wrap">
           <span className="nav-icon opacity-60 group-hover:opacity-100 transition-opacity">{icon}</span>
           <div className="flex flex-col">
-            <span className="settings-option-label text-base">{label}</span>
+            <span className="profile-option-label text-base">{label}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -319,7 +321,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [activePage, setActivePage] = useState<PageView>('dashboard');
   const [outTab, setOutTab] = useState<'Payable' | 'Receivable'>('Payable');
-  const [settingsTab, setSettingsTab] = useState<'profile' | 'subscription' | 'wallet' | 'monthly' | 'preferences' | 'help' | 'about'>('profile');
+  const [profileTab, setProfileTab] = useState<'overview' | 'account' | 'subscription' | 'wallet' | 'monthly' | 'preferences' | 'help' | 'about'>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
@@ -1679,68 +1681,194 @@ export default function App() {
 
 
 
-        {/* Profile (Formerly Settings) */}
+        {/* Profile Section Dashboard */}
         <section className={cn("page-container", activePage === 'profile' && "active")}>
-          <div className="page-header">
-            <div>
-              <div className="page-title">Profile<span>.</span></div>
-              <div className="page-sub">Manage your profile, finances and app preferences</div>
-            </div>
-          </div>
-
-          <div className="settings-layout">
-            {/* Internal Sidebar */}
-            <aside className="settings-sidebar-internal">
-              <div className="settings-sidebar-profile">
-                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
-                  {user?.name?.charAt(0) || user?.email?.charAt(0).toUpperCase() || 'U'}
-                </div>
-                <div className="settings-sidebar-profile-info">
-                  <span className="settings-sidebar-profile-name">{user?.name || user?.displayName || 'User'}</span>
-                  <span className="settings-sidebar-profile-email">{user?.email}</span>
-                </div>
-              </div>
-
-              <div className="settings-nav-group">
-                <div className="settings-nav-group-title">Account</div>
-                <SettingsInternalNavItem active={settingsTab === 'profile'} onClick={() => setSettingsTab('profile')} icon={<User size={18} />} label="Profile" />
-                <SettingsInternalNavItem active={settingsTab === 'subscription'} onClick={() => setSettingsTab('subscription')} icon={<Crown size={18} />} label="Subscription" badge={userPlan === 'premium' ? "Pro" : "Free"} />
-              </div>
-
-              <div className="settings-nav-group">
-                <div className="settings-nav-group-title">Finances</div>
-                <SettingsInternalNavItem active={settingsTab === 'wallet'} onClick={() => setSettingsTab('wallet')} icon={<Wallet size={18} />} label="Wallet" />
-                <SettingsInternalNavItem active={settingsTab === 'monthly'} onClick={() => setSettingsTab('monthly')} icon={<BarChart3 size={18} />} label="Monthly" />
-              </div>
-
-              <div className="settings-nav-group">
-                <div className="settings-nav-group-title">App</div>
-                <SettingsInternalNavItem active={settingsTab === 'preferences'} onClick={() => setSettingsTab('preferences')} icon={<Zap size={18} />} label="Preferences" />
-                <SettingsInternalNavItem active={settingsTab === 'help'} onClick={() => setSettingsTab('help')} icon={<HelpCircle size={18} />} label="Help" />
-                <SettingsInternalNavItem active={settingsTab === 'about'} onClick={() => setSettingsTab('about')} icon={<Info size={18} />} label="About" />
-              </div>
-
-              <div className="mt-auto pt-8">
-                <button 
-                  onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}
-                  className="settings-nav-item-internal text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 w-full text-left"
-                >
-                  <div className="nav-icon-wrap">
-                    <LogOut size={18} className="nav-icon text-red-500" />
-                    <span>{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
-                  </div>
+          
+          {profileTab === 'overview' ? (
+            <div className="settings-page animate-in fade-in duration-300">
+              {/* Settings Header */}
+              <div className="settings-header">
+                <button className="settings-header-btn" onClick={() => setActivePage('dashboard')}>
+                  <ChevronLeft size={22} />
+                </button>
+                <span className="settings-header-title">Profile Settings</span>
+                <button className="settings-header-btn">
+                  <MoreVertical size={20} />
                 </button>
               </div>
-            </aside>
 
-            {/* Content Area */}
-            <div className="settings-content-area">
-              {settingsTab === 'profile' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><User size={20} /></div>
-                    <h2 className="settings-page-title">Public <span>Profile</span></h2>
+              <div className="settings-scroll">
+                {/* Profile Avatar Card */}
+                <div className="settings-profile-card">
+                  <div className="settings-avatar-wrap">
+                    <div className="settings-avatar">
+                      {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    <button className="settings-avatar-edit">
+                      <Edit3 size={13} />
+                    </button>
                   </div>
+                  <div className="settings-profile-name">
+                    {user?.name || user?.displayName || 'User Full Name'}
+                  </div>
+                  <div className="settings-profile-email">
+                    {user?.email || 'User@gmail.com'}
+                  </div>
+                  <div className={cn("settings-plan-pill", userPlan === 'premium' ? "premium" : "free")}>
+                    {userPlan === 'premium' ? 'Premium Member' : 'Free Plan'}
+                  </div>
+                </div>
+
+                {/* ACCOUNT SETTINGS */}
+                <div className="settings-group">
+                  <div className="settings-group-title">Account Settings</div>
+                  <div className="settings-card">
+                    <SettingsRow 
+                      icon={<User size={18} />}
+                      label="My Account"
+                      sub="Personal information and preferences"
+                      onClick={() => setProfileTab('account')}
+                    />
+                    <SettingsRow 
+                      icon={<BarChart3 size={18} />}
+                      label="Monthly Analytics"
+                      sub="View your activity reports"
+                      onClick={() => setProfileTab('monthly')}
+                    />
+                    <SettingsRow 
+                      icon={<Wallet size={18} />}
+                      label="My Wallet"
+                      sub="Payment methods and balance"
+                      onClick={() => setProfileTab('wallet')}
+                    />
+                  </div>
+                </div>
+
+                {/* SECURITY & NOTIFICATIONS */}
+                <div className="settings-group">
+                  <div className="settings-group-title">Security & Notifications</div>
+                  <div className="settings-card">
+                    <SettingsRow 
+                      icon={<Bell size={18} />}
+                      label="Notifications"
+                      sub="Alerts, updates, and messages"
+                      onClick={() => setProfileTab('preferences')}
+                    />
+                    <SettingsRow 
+                      icon={<Lock size={18} />}
+                      label="Password and Security"
+                      sub="2FA, password, and active sessions"
+                      onClick={() => setProfileTab('account')}
+                    />
+                  </div>
+                </div>
+
+                {/* PLAN & SUPPORT */}
+                <div className="settings-group">
+                  <div className="settings-group-title">Plan & Support</div>
+                  <div className="settings-card">
+                    <SettingsRow 
+                      icon={<Crown size={18} />}
+                      label="Subscription"
+                      sub="Manage your premium plan"
+                      onClick={() => setProfileTab('subscription')}
+                    />
+                    <SettingsRow 
+                      icon={<HelpCircle size={18} />}
+                      label="Help & About"
+                      sub="FAQ, support, and legal"
+                      onClick={() => setProfileTab('help')}
+                    />
+                  </div>
+                </div>
+
+                {/* Bottom Actions */}
+                <div style={{ marginTop: 8 }}>
+                  <button className="settings-action-row" onClick={() => setShowAuthModal(true)}>
+                    <div className="settings-row-icon add-account">
+                      <UserPlus size={18} />
+                    </div>
+                    <span className="settings-action-label">Add Account</span>
+                    <Plus size={18} className="settings-action-chevron" />
+                  </button>
+
+                  <button className="settings-action-row" onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}>
+                    <div className="settings-row-icon signout">
+                      <LogOut size={18} />
+                    </div>
+                    <span className="settings-action-label danger">{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
+                  </button>
+                </div>
+
+                {/* Version */}
+                <div className="settings-version">Version 2.4.1 (2024)</div>
+              </div>
+            </div>
+          ) : (
+            /* Sub-tab content views (account, subscription, wallet, etc.) */
+            <div>
+              <div className="page-header">
+                <div>
+                  <div className="page-title">Profile<span>.</span></div>
+                  <div className="page-sub">Manage your profile, finances and app preferences</div>
+                </div>
+              </div>
+
+              <div className="profile-layout">
+                {/* Internal Sidebar */}
+                <aside className="profile-sidebar-internal">
+                  <div className="profile-sidebar-profile">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
+                      {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="profile-sidebar-profile-info">
+                      <span className="profile-sidebar-profile-name">{user?.name || user?.displayName || 'User'}</span>
+                      <span className="profile-sidebar-profile-email">{user?.email}</span>
+                    </div>
+                  </div>
+
+                  <div className="profile-nav-group">
+                    <ProfileInternalNavItem active={profileTab === 'overview'} onClick={() => setProfileTab('overview')} icon={<LayoutDashboard size={18} />} label="Overview" />
+                    <ProfileInternalNavItem active={profileTab === 'account'} onClick={() => setProfileTab('account')} icon={<User size={18} />} label="My Account" />
+                    <ProfileInternalNavItem active={profileTab === 'subscription'} onClick={() => setProfileTab('subscription')} icon={<Crown size={18} />} label="Subscription" badge={userPlan === 'premium' ? "Pro" : "Free"} />
+                  </div>
+
+                  <div className="profile-nav-group">
+                    <div className="profile-nav-group-title">Finances</div>
+                    <ProfileInternalNavItem active={profileTab === 'wallet'} onClick={() => setProfileTab('wallet')} icon={<Wallet size={18} />} label="Wallet" />
+                    <ProfileInternalNavItem active={profileTab === 'monthly'} onClick={() => setProfileTab('monthly')} icon={<BarChart3 size={18} />} label="Monthly" />
+                  </div>
+
+                  <div className="profile-nav-group">
+                    <div className="profile-nav-group-title">App</div>
+                    <ProfileInternalNavItem active={profileTab === 'preferences'} onClick={() => setProfileTab('preferences')} icon={<Zap size={18} />} label="Preferences" />
+                    <ProfileInternalNavItem active={profileTab === 'help'} onClick={() => setProfileTab('help')} icon={<HelpCircle size={18} />} label="Help" />
+                    <ProfileInternalNavItem active={profileTab === 'about'} onClick={() => setProfileTab('about')} icon={<Info size={18} />} label="About" />
+                  </div>
+
+                  <div className="mt-auto pt-8">
+                    <button 
+                      onClick={() => isPreviewMode ? setShowAuthModal(true) : signOut(auth)}
+                      className="profile-nav-item-internal text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 w-full text-left"
+                    >
+                      <div className="nav-icon-wrap">
+                        <LogOut size={18} className="nav-icon text-red-500" />
+                        <span>{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
+                      </div>
+                    </button>
+                  </div>
+                </aside>
+
+                {/* Content Area */}
+                <div className="profile-content-area">
+
+              {profileTab === 'account' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><User size={20} /></div>
+                    <h2 className="profile-page-title">Public <span>Profile</span></h2>
+                  </div>
+
                   
                   <div className="flex flex-col gap-8">
                     <div className="profile-info-list">
@@ -1768,11 +1896,11 @@ export default function App() {
                 </div>
               )}
 
-              {settingsTab === 'subscription' && (
+              {profileTab === 'subscription' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><Crown size={20} /></div>
-                    <h2 className="settings-page-title">Manage <span>Subscription</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Crown size={20} /></div>
+                    <h2 className="profile-page-title">Manage <span>Subscription</span></h2>
                   </div>
 
                   <div className="payment-section">
@@ -1831,11 +1959,11 @@ export default function App() {
                 </div>
               )}
 
-              {settingsTab === 'wallet' && (
+              {profileTab === 'wallet' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><Wallet size={20} /></div>
-                    <h2 className="settings-page-title">My <span>Wallets</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Wallet size={20} /></div>
+                    <h2 className="profile-page-title">My <span>Wallets</span></h2>
                   </div>
                   
                   <div className="flex justify-end mb-6">
@@ -1938,11 +2066,11 @@ export default function App() {
                 </div>
               )}
 
-              {settingsTab === 'monthly' && (
+              {profileTab === 'monthly' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><BarChart3 size={20} /></div>
-                    <h2 className="settings-page-title">Monthly <span>Overview</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><BarChart3 size={20} /></div>
+                    <h2 className="profile-page-title">Monthly <span>Overview</span></h2>
                   </div>
 
                   <div className="flex justify-between items-center mb-6">
@@ -1984,18 +2112,18 @@ export default function App() {
                 </div>
               )}
 
-              {settingsTab === 'preferences' && (
+              {profileTab === 'preferences' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><Zap size={20} /></div>
-                    <h2 className="settings-page-title">App <span>Preferences</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Zap size={20} /></div>
+                    <h2 className="profile-page-title">App <span>Preferences</span></h2>
                   </div>
 
                   <div className="space-y-2">
-                    <div className="settings-option py-6">
-                      <div className="settings-option-info">
-                        <span className="settings-option-label text-base">Dark Mode</span>
-                        <span className="settings-option-sub">Optimize the interface for low light conditions</span>
+                    <div className="profile-option py-6">
+                      <div className="profile-option-info">
+                        <span className="profile-option-label text-base">Dark Mode</span>
+                        <span className="profile-option-sub">Optimize the interface for low light conditions</span>
                       </div>
                       <label className="switch">
                         <input type="checkbox" checked={isDark} onChange={() => setIsDark(!isDark)} />
@@ -2003,10 +2131,10 @@ export default function App() {
                       </label>
                     </div>
 
-                    <div className="settings-option py-6">
-                      <div className="settings-option-info">
-                        <span className="settings-option-label text-base">Smart Notifications</span>
-                        <span className="settings-option-sub">Receive relevant feature updates and news</span>
+                    <div className="profile-option py-6">
+                      <div className="profile-option-info">
+                        <span className="profile-option-label text-base">Smart Notifications</span>
+                        <span className="profile-option-sub">Receive relevant feature updates and news</span>
                       </div>
                       <label className="switch">
                         <input type="checkbox" defaultChecked />
@@ -2014,10 +2142,10 @@ export default function App() {
                       </label>
                     </div>
 
-                    <div className="settings-option py-6">
-                      <div className="settings-option-info">
-                        <span className="settings-option-label text-base">Sound Effects</span>
-                        <span className="settings-option-sub">Mute all sounds from the application</span>
+                    <div className="profile-option py-6">
+                      <div className="profile-option-info">
+                        <span className="profile-option-label text-base">Sound Effects</span>
+                        <span className="profile-option-sub">Mute all sounds from the application</span>
                       </div>
                       <label className="switch">
                         <input type="checkbox" />
@@ -2025,18 +2153,18 @@ export default function App() {
                       </label>
                     </div>
 
-                    <SettingsItemLink icon={<Globe size={18} />} label="Language" value="English" />
-                    <SettingsItemLink icon={<Landmark size={18} />} label="Payment Currency" value="INR - ₹" />
-                    <SettingsItemLink icon={<Languages size={18} />} label="Priority Mode" value="Most Recent" />
+                    <ProfileItemLink icon={<Globe size={18} />} label="Language" value="English" />
+                    <ProfileItemLink icon={<Landmark size={18} />} label="Payment Currency" value="INR - ₹" />
+                    <ProfileItemLink icon={<Languages size={18} />} label="Priority Mode" value="Most Recent" />
                   </div>
                 </div>
               )}
 
-              {settingsTab === 'help' && (
+              {profileTab === 'help' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><HelpCircle size={20} /></div>
-                    <h2 className="settings-page-title">Help & <span>Support</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><HelpCircle size={20} /></div>
+                    <h2 className="profile-page-title">Help & <span>Support</span></h2>
                   </div>
 
                   <div className="flex flex-col gap-6">
@@ -2077,11 +2205,11 @@ export default function App() {
                 </div>
               )}
 
-              {settingsTab === 'about' && (
+              {profileTab === 'about' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="settings-page-header">
-                    <div className="settings-section-icon"><Info size={20} /></div>
-                    <h2 className="settings-page-title">About <span>App</span></h2>
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Info size={20} /></div>
+                    <h2 className="profile-page-title">About <span>App</span></h2>
                   </div>
 
                   <div className="about-banner">
@@ -2110,8 +2238,10 @@ export default function App() {
                   </div>
                 </div>
               )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </section>
         </div>
       </main>
@@ -2279,11 +2409,11 @@ export default function App() {
 
       {/* Floating Action Button for Mobile */}
       <div className="md:hidden">
-        {(['transactions', 'dashboard'].includes(activePage) || (activePage === 'profile' && ['wallet', 'monthly'].includes(settingsTab))) && (
+        {(['transactions', 'dashboard'].includes(activePage) || (activePage === 'profile' && ['wallet', 'monthly'].includes(profileTab))) && (
           <button 
             className="fab"
             onClick={() => {
-              if (activePage === 'profile' && settingsTab === 'wallet') {
+              if (activePage === 'profile' && profileTab === 'wallet') {
                 setEditId(null); 
                 setFormData({
                   ...formData,
@@ -2291,7 +2421,7 @@ export default function App() {
                   name: '', type: 'Current', balance: '0'
                 });
                 setShowModal('account'); 
-              } else if (activePage === 'profile' && settingsTab === 'monthly') {
+              } else if (activePage === 'profile' && profileTab === 'monthly') {
                 setEditId(null);
                 setFormData({
                   ...formData,
@@ -2384,6 +2514,9 @@ export default function App() {
         </div>
       </div>
 
+      {/* Bottom Navigation */}
+      <BottomNav activePage={activePage} setActivePage={setActivePage} />
+
       {/* Toast */}
       {toast && (
         <div className={cn("toast-message show", toast.type)}>
@@ -2466,3 +2599,57 @@ const donutOptions = {
   },
   cutout: '75%'
 };
+function SettingsRow({ icon, label, sub, onClick }: { icon: ReactNode; label: string; sub: string; onClick: () => void }) {
+  return (
+    <button className="settings-row" onClick={onClick}>
+      <div className="settings-row-icon">
+        {icon}
+      </div>
+      <div className="settings-row-content">
+        <div className="settings-row-label">{label}</div>
+        <div className="settings-row-sub">{sub}</div>
+      </div>
+      <ChevronRight size={18} className="settings-row-chevron" />
+    </button>
+  );
+}
+
+function BottomNav({ activePage, setActivePage }: { activePage: PageView; setActivePage: (p: PageView) => void }) {
+  return (
+    <div className="bottom-nav">
+      <BottomNavItem 
+        active={activePage === 'dashboard'} 
+        onClick={() => setActivePage('dashboard')} 
+        icon={<LayoutDashboard size={22} />} 
+        label="Home" 
+      />
+      <BottomNavItem 
+        active={activePage === 'transactions'} 
+        onClick={() => setActivePage('transactions')} 
+        icon={<ArrowRightLeft size={22} />} 
+        label="Transactions" 
+      />
+      <BottomNavItem 
+        active={activePage === 'outstanding'} 
+        onClick={() => setActivePage('outstanding')} 
+        icon={<Clock size={22} />} 
+        label="Outstanding" 
+      />
+      <BottomNavItem 
+        active={activePage === 'profile'} 
+        onClick={() => setActivePage('profile')} 
+        icon={<User size={22} />} 
+        label="Profile" 
+      />
+    </div>
+  );
+}
+
+function BottomNavItem({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: ReactNode; label: string }) {
+  return (
+    <button className={cn("bottom-nav-item", active && "active")} onClick={onClick}>
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
