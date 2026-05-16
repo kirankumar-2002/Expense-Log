@@ -1923,7 +1923,7 @@ input:checked + .slider:before {
   font-size: 36px;
   font-weight: 800;
   font-family: var(--font-sans);
-  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);
+  box-shadow: 0 8px 32px rgba(249, 115, 22, 0.15);
   border: 4px solid white;
 }
 
@@ -1987,15 +1987,17 @@ input:checked + .slider:before {
 }
 
 .settings-plan-pill.premium {
-  background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  background: #ffedd5;
+  color: #9a3412;
+  border: none;
+  font-weight: 900;
 }
 
 .settings-plan-pill.free {
-  background: rgba(100, 116, 139, 0.1);
-  color: #64748b;
-  border: 1px solid rgba(100, 116, 139, 0.15);
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  font-weight: 900;
 }
 
 /* Section Group */
@@ -2017,8 +2019,8 @@ input:checked + .slider:before {
   background: white;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .dark .settings-card {
@@ -2284,3 +2286,93 @@ input:checked + .slider:before {
   }
 }
 
+
+/* === Premium Profile Styles === */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.settings-plan-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.settings-plan-pill.free {
+  background: rgba(100, 116, 139, 0.1);
+  color: #94a3b8;
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.settings-plan-pill.premium {
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+.settings-plan-pill:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.settings-row-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.settings-row:hover .settings-row-icon-wrap {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.settings-group-premium {
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.settings-card-premium {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.settings-header-premium {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.dark .settings-header-premium {
+  background: rgba(15, 23, 42, 0.8);
+}

@@ -4,9 +4,10 @@
  */
 
 import { useState, useEffect, useMemo, useRef, useCallback, ReactNode } from 'react';
-import { auth, db, setAnalyticsUserPlan, logAnalyticsEvent } from './firebase';
+import { auth, db, storage, setAnalyticsUserPlan, logAnalyticsEvent } from './firebase';
 import { onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import SignIn from './SignIn';
 import SignUp from './SignUp';
 import { Transaction, Outstanding, PageView, Account, FinancialRecord } from './types';
@@ -56,7 +57,10 @@ import {
   Languages,
   ArrowDownLeft,
   ArrowRight,
-  UserPlus
+  UserPlus,
+  ShieldCheck,
+  Key,
+  Monitor
 } from 'lucide-react';
 import { 
   Chart as ChartJS, 
@@ -276,6 +280,26 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      if (isPreviewMode) {
+        setIsPreviewMode(false);
+        setUser(null);
+        setActivePage('dashboard');
+        return;
+      }
+      await signOut(auth);
+      // Clean up state
+      setUser(null);
+      setUserPlan('free');
+      setActivePage('dashboard');
+      setProfileTab('overview');
+      localStorage.removeItem('supabase.auth.token');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
   // Force session establishment when user state is first established (handles already-logged-in cases)
   useEffect(() => {
     if (user && !isAuthLoading) {
@@ -331,7 +355,7 @@ export default function App() {
   }, []);
 
   const [outTab, setOutTab] = useState<'Payable' | 'Receivable'>('Payable');
-  const [profileTab, setProfileTab] = useState<'overview' | 'account' | 'subscription' | 'wallet' | 'monthly' | 'preferences' | 'help' | 'about'>('overview');
+  const [profileTab, setProfileTab] = useState<'overview' | 'account' | 'subscription' | 'wallet' | 'monthly' | 'notifications' | 'security' | 'preferences' | 'help' | 'about'>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [outstanding, setOutstanding] = useState<Outstanding[]>([]);
@@ -1676,15 +1700,17 @@ export default function App() {
         <section className={cn("page-container", activePage === 'profile' && "active")}>
           
           {profileTab === 'overview' ? (
-            <div className="settings-page animate-in fade-in duration-300">
-              {/* Settings Header */}
-              <div className="settings-header">
-                <button className="settings-header-btn" onClick={() => setActivePage(previousPageRef.current || 'dashboard')}>
+            <div className="settings-page animate-in fade-in duration-500 pb-24">
+              {/* Premium Settings Header */}
+              <div className="settings-header-premium">
+                <button 
+                  className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-muted hover:text-text transition-all active:scale-95" 
+                  onClick={() => setActivePage(previousPageRef.current || 'dashboard')}
+                >
                   <ChevronLeft size={22} />
                 </button>
-                <span className="settings-header-title">Profile Settings</span>
-                {/* Spacer to keep title centered */}
-                <div style={{ width: 40 }} />
+                <span className="text-sm font-800 text-text uppercase tracking-widest">Profile Hub</span>
+                <div className="w-10" />
               </div>
 
               {/* Hidden file input for profile photo */}
@@ -1697,160 +1723,189 @@ export default function App() {
                   const file = e.target.files?.[0];
                   if (!file || !auth.currentUser) return;
                   try {
-                    // Create a local preview URL
-                    const previewUrl = URL.createObjectURL(file);
-                    // Update Firebase Auth profile photoURL
-                    await updateProfile(auth.currentUser, { photoURL: previewUrl });
-                    setUser((prev: any) => ({ ...prev, photoURL: previewUrl }));
+                    setToast({ msg: 'Uploading photo...', type: 'info' });
+                    const storageRef = ref(storage, `profiles/${auth.currentUser.uid}`);
+                    await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(storageRef);
+                    await updateProfile(auth.currentUser, { photoURL: downloadURL });
+                    const userRef = doc(db, 'users', auth.currentUser.uid);
+                    await updateDoc(userRef, { photoURL: downloadURL });
+                    setUser((prev: any) => ({ ...prev, photoURL: downloadURL }));
                     setToast({ msg: 'Profile photo updated!', type: 'success' });
                   } catch (err) {
                     console.error('Failed to update profile photo:', err);
                     setToast({ msg: 'Failed to update photo', type: 'error' });
                   }
-                  // Reset input so same file can be re-selected
                   e.target.value = '';
                 }}
               />
 
-              <div className="settings-scroll">
-                {/* Profile Avatar Card */}
-                <div className="settings-profile-card">
-                  <div className="settings-avatar-wrap">
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} alt="Profile" className="settings-avatar" style={{ objectFit: 'cover' }} />
-                    ) : (
-                      <div className="settings-avatar">
-                        {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
-                      </div>
-                    )}
-                    <button className="settings-avatar-edit" onClick={() => profilePhotoInputRef.current?.click()}>
-                      <Edit3 size={13} />
+              <div className="settings-scroll no-scrollbar pt-6 px-4">
+                {/* Profile Hero Card */}
+                <div className="glass-card rounded-[2.5rem] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-accent/10 transition-colors"></div>
+                  
+                  <div className="relative mb-6">
+                    <div className="w-24 h-24 rounded-[2rem] border-4 border-white dark:border-slate-800 shadow-2xl overflow-hidden glass-card">
+                      {user?.photoURL ? (
+                        <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-accent/10 text-accent text-3xl font-800">
+                          {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      className="absolute -bottom-2 -right-2 w-10 h-10 bg-accent text-white rounded-xl shadow-lg flex items-center justify-center border-4 border-white dark:border-slate-900 active:scale-90 transition-transform"
+                      onClick={() => profilePhotoInputRef.current?.click()}
+                    >
+                      <Edit3 size={14} />
                     </button>
                   </div>
-                  <div className="settings-profile-name">
-                    {user?.name || user?.displayName || 'User Full Name'}
-                  </div>
-                  <div className="settings-profile-email">
-                    {user?.email || 'User@gmail.com'}
-                  </div>
-                  <div className={cn("settings-plan-pill", userPlan === 'premium' ? "premium" : "free")}>
+
+                  <h2 className="text-2xl font-800 text-text tracking-tight mb-1">
+                    {user?.name || user?.displayName || 'Finance Member'}
+                  </h2>
+                  <p className="text-sm text-muted font-medium mb-6">
+                    {user?.email || 'member@expenselog.pro'}
+                  </p>
+
+                  <div 
+                    className={cn(
+                      "settings-plan-pill", 
+                      userPlan === 'premium' ? "premium" : "free"
+                    )}
+                    onClick={() => setProfileTab('subscription')}
+                  >
+                    {userPlan === 'premium' ? <Gem size={12} className="mr-2" /> : <Lock size={10} className="mr-2 opacity-60" />}
                     {userPlan === 'premium' ? 'Premium Member' : 'Free Plan'}
                   </div>
                 </div>
 
-                {/* ACCOUNT SETTINGS */}
-                <div className="settings-group">
-                  <div className="settings-group-title">Account Settings</div>
-                  <div className="settings-card">
+                {/* ACCOUNT SETTINGS GROUP */}
+                <div className="mb-8">
+                  <div className="px-2 mb-4 flex items-center justify-between">
+                    <span className="text-[10px] font-800 text-muted uppercase tracking-[0.2em]">Personalization</span>
+                  </div>
+                  <div className="glass-card rounded-[2rem] overflow-hidden divide-y divide-border/30">
                     <SettingsRow 
                       icon={<User size={18} />}
                       label="My Account"
-                      sub="Personal information and preferences"
+                      sub="Identity and contact info"
                       onClick={() => setProfileTab('account')}
                     />
                     <SettingsRow 
                       icon={<BarChart3 size={18} />}
                       label="Monthly Analytics"
-                      sub="View your activity reports"
+                      sub="Activity & spend reports"
                       onClick={() => setProfileTab('monthly')}
                     />
                     <SettingsRow 
                       icon={<Wallet size={18} />}
                       label="My Wallet"
-                      sub="Payment methods and balance"
+                      sub="Manage bank accounts"
                       onClick={() => setProfileTab('wallet')}
                     />
                   </div>
                 </div>
 
-                {/* SECURITY & NOTIFICATIONS */}
-                <div className="settings-group">
-                  <div className="settings-group-title">Security & Notifications</div>
-                  <div className="settings-card">
+                {/* SECURITY & PREFERENCES GROUP */}
+                <div className="mb-8">
+                  <div className="px-2 mb-4 flex items-center justify-between">
+                    <span className="text-[10px] font-800 text-muted uppercase tracking-[0.2em]">Security & App</span>
+                  </div>
+                  <div className="glass-card rounded-[2rem] overflow-hidden divide-y divide-border/30">
                     <SettingsRow 
                       icon={<Bell size={18} />}
                       label="Notifications"
-                      sub="Alerts, updates, and messages"
-                      onClick={() => setProfileTab('preferences')}
+                      sub="Alerts & system updates"
+                      onClick={() => setProfileTab('notifications')}
                     />
                     <SettingsRow 
-                      icon={<Lock size={18} />}
-                      label="Password and Security"
-                      sub="2FA, password, and active sessions"
-                      onClick={() => setProfileTab('account')}
+                      icon={<Shield size={18} />}
+                      label="Password & Security"
+                      sub="Login protection & sessions"
+                      onClick={() => setProfileTab('security')}
+                    />
+                    <SettingsRow 
+                      icon={<Zap size={18} />}
+                      label="App Preferences"
+                      sub="Customization & theme"
+                      onClick={() => setProfileTab('preferences')}
                     />
                   </div>
                 </div>
 
-                {/* PLAN & SUPPORT */}
-                <div className="settings-group">
-                  <div className="settings-group-title">Plan & Support</div>
-                  <div className="settings-card">
+                {/* SUPPORT GROUP */}
+                <div className="mb-8">
+                  <div className="px-2 mb-4 flex items-center justify-between">
+                    <span className="text-[10px] font-800 text-muted uppercase tracking-[0.2em]">Resources</span>
+                  </div>
+                  <div className="glass-card rounded-[2rem] overflow-hidden divide-y divide-border/30">
                     <SettingsRow 
                       icon={<Crown size={18} />}
                       label="Subscription"
-                      sub="Manage your premium plan"
+                      sub="Manage membership"
                       onClick={() => setProfileTab('subscription')}
                     />
                     <SettingsRow 
                       icon={<HelpCircle size={18} />}
                       label="Help & About"
-                      sub="FAQ, support, and legal"
+                      sub="Documentation & support"
                       onClick={() => setProfileTab('help')}
                     />
                   </div>
                 </div>
 
-                {/* Bottom Actions */}
-                <div style={{ marginTop: 8 }}>
-                  <button className="settings-action-row" onClick={() => setShowAuthModal(true)}>
-                    <div className="settings-row-icon add-account">
-                      <UserPlus size={18} />
+                {/* ACTIONS */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <button 
+                    className="glass-card rounded-2xl p-4 flex flex-col items-center gap-3 hover:bg-accent/5 transition-all group active:scale-95 border-accent/20"
+                    onClick={() => {
+                      setEditId(null);
+                      setFormData({ ...formData, name: '', type: 'Current', balance: '0' });
+                      setShowModal('account');
+                    }}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <UserPlus size={20} />
                     </div>
-                    <span className="settings-action-label">Add Account</span>
-                    <Plus size={18} className="settings-action-chevron" />
+                    <span className="text-xs font-bold text-text">Add Account</span>
                   </button>
 
-                  <button className="settings-action-row" onClick={async () => {
-                    if (isPreviewMode) {
-                      setShowAuthModal(true);
-                    } else {
-                      try {
-                        await signOut(auth);
-                        // Clear all local state
-                        setTransactions([]);
-                        setOutstanding([]);
-                        setAccounts([]);
-                        setProfileTab('overview');
-                        setActivePage('dashboard');
-                        setSupabaseToken(null);
-                        setSupabaseUser(null);
-                        localStorage.removeItem('supabase_token');
-                        setToast({ msg: 'Signed out successfully', type: 'success' });
-                      } catch (err) {
-                        console.error('Sign out error:', err);
-                        setToast({ msg: 'Failed to sign out', type: 'error' });
-                      }
-                    }
-                  }}>
-                    <div className="settings-row-icon signout">
-                      <LogOut size={18} />
+                  <button 
+                    className="glass-card rounded-2xl p-4 flex flex-col items-center gap-3 hover:bg-red-500/5 transition-all group active:scale-95 border-red-500/20"
+                    onClick={handleSignOut}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <LogOut size={20} />
                     </div>
-                    <span className="settings-action-label danger">{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
+                    <span className="text-xs font-bold text-red-500">{isPreviewMode ? 'Sign In' : 'Sign Out'}</span>
                   </button>
                 </div>
 
-                {/* Version */}
-                <div className="settings-version">Version 2.4.1 (2024)</div>
+                {/* Footer Info */}
+                <div className="text-center pb-12">
+                  <div className="text-[9px] font-bold text-muted uppercase tracking-[0.3em]">Version 2.4.8 Platinum</div>
+                  <div className="mt-2 text-[8px] text-muted opacity-50 uppercase tracking-widest">© 2024 Expense Log Pro</div>
+                </div>
               </div>
             </div>
           ) : (
             /* Sub-tab content views (account, subscription, wallet, etc.) */
             <div>
               <div className="page-header">
-                <div>
-                  <div className="page-title">Profile<span>.</span></div>
-                  <div className="page-sub">Manage your profile, finances and app preferences</div>
+                <div className="flex items-center gap-4">
+                  <button 
+                    className="p-2 rounded-xl hover:bg-surface transition-colors text-muted hover:text-text"
+                    onClick={() => setProfileTab('overview')}
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <div>
+                    <div className="page-title">Profile<span>.</span></div>
+                    <div className="page-sub">Manage your profile, finances and app preferences</div>
+                  </div>
                 </div>
               </div>
 
@@ -1881,6 +1936,8 @@ export default function App() {
 
                   <div className="profile-nav-group">
                     <div className="profile-nav-group-title">App</div>
+                    <ProfileInternalNavItem active={profileTab === 'notifications'} onClick={() => setProfileTab('notifications')} icon={<Bell size={18} />} label="Notifications" />
+                    <ProfileInternalNavItem active={profileTab === 'security'} onClick={() => setProfileTab('security')} icon={<Shield size={18} />} label="Security" />
                     <ProfileInternalNavItem active={profileTab === 'preferences'} onClick={() => setProfileTab('preferences')} icon={<Zap size={18} />} label="Preferences" />
                     <ProfileInternalNavItem active={profileTab === 'help'} onClick={() => setProfileTab('help')} icon={<HelpCircle size={18} />} label="Help" />
                     <ProfileInternalNavItem active={profileTab === 'about'} onClick={() => setProfileTab('about')} icon={<Info size={18} />} label="About" />
@@ -1906,31 +1963,86 @@ export default function App() {
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="profile-page-header">
                     <div className="profile-section-icon"><User size={20} /></div>
-                    <h2 className="profile-page-title">Public <span>Profile</span></h2>
+                    <h2 className="profile-page-title">My <span>Account</span></h2>
                   </div>
 
-                  
-                  <div className="flex flex-col gap-8">
-                    <div className="profile-info-list">
-                      <div className="profile-info-item">
-                        <span className="profile-info-label">Full Name</span>
-                        <span className="profile-info-value">{user?.name || user?.displayName || 'Not provided'}</span>
+                  <div className="flex flex-col items-center mb-8 pt-4">
+                    <div className="relative">
+                      <div className="w-24 h-24 rounded-3xl border-4 border-white dark:border-slate-800 shadow-xl overflow-hidden glass-card">
+                        {user?.photoURL ? (
+                          <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-accent/10 text-accent text-3xl font-800">
+                            {user?.name?.charAt(0) || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                          </div>
+                        )}
                       </div>
-                      <div className="profile-info-item">
-                        <span className="profile-info-label">Email Address</span>
-                        <span className="profile-info-value">{user?.email}</span>
-                      </div>
-
+                      <button 
+                        className="absolute -bottom-2 -right-2 w-10 h-10 bg-accent text-white rounded-xl shadow-lg flex items-center justify-center border-4 border-white dark:border-slate-900 active:scale-90 transition-transform"
+                        onClick={() => profilePhotoInputRef.current?.click()}
+                      >
+                        <Edit3 size={14} />
+                      </button>
                     </div>
+                    <div className="mt-4 text-center">
+                      <h3 className="text-xl font-800 text-text">{user?.name || user?.displayName || 'Finance Member'}</h3>
+                      <p className="text-xs text-muted font-medium mt-1">{user?.email}</p>
+                    </div>
+                  </div>
 
-                    <div className="p-5 bg-indigo-50 dark:bg-indigo-500/5 rounded-3xl border border-indigo-100 dark:border-indigo-500/10 mt-10">
-                      <div className="flex gap-4">
-                        <div className="text-indigo-600 pt-1"><Shield size={20} /></div>
-                        <div>
-                          <h4 className="text-sm font-bold text-text mb-1">Account Security</h4>
-                          <p className="text-xs text-muted leading-relaxed">Your account is protected by Google Firebase Authentication. Always keep your password secure and enable 2FA if possible.</p>
+                  <div className="settings-scroll no-scrollbar" style={{ padding: 0 }}>
+                    <div className="settings-group">
+                      <div className="settings-group-title">Personal Information</div>
+                      <div className="settings-card">
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Full Name</div>
+                            <div className="settings-row-sub">{user?.name || user?.displayName || 'Not provided'}</div>
+                          </div>
+                        </div>
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Email Address</div>
+                            <div className="settings-row-sub">{user?.email}</div>
+                          </div>
+                        </div>
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Phone Number</div>
+                            <div className="settings-row-sub">+1 (555) 000-0000</div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="settings-group">
+                      <div className="settings-group-title">Preferences</div>
+                      <div className="settings-card">
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Default Currency</div>
+                            <div className="settings-row-sub">USD ($)</div>
+                          </div>
+                          <ChevronRight size={18} className="settings-row-chevron" />
+                        </div>
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Language</div>
+                            <div className="settings-row-sub">English (US)</div>
+                          </div>
+                          <ChevronRight size={18} className="settings-row-chevron" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="settings-group" style={{ marginTop: 32 }}>
+                      <button className="settings-action-row" style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                        <div className="settings-row-icon signout">
+                          <Shield size={18} />
+                        </div>
+                        <span className="settings-action-label danger">Delete Account</span>
+                        <Plus size={18} className="settings-action-chevron rotate-45" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -2107,47 +2219,66 @@ export default function App() {
               )}
 
               {profileTab === 'monthly' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="animate-in fade-in slide-in-from-right-4 duration-500 relative min-h-[500px]">
                   <div className="profile-page-header">
                     <div className="profile-section-icon"><BarChart3 size={20} /></div>
                     <h2 className="profile-page-title">Monthly <span>Overview</span></h2>
                   </div>
 
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="text-sm text-muted font-medium">Historical flow analytics</div>
-                    <select className="filter-select w-24 h-9" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
-                      {Array.from(new Set([...months.map(m => m.split('-')[0]), new Date().getFullYear().toString()])).sort((a,b) => b.localeCompare(a)).map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
-                  </div>
+                  {userPlan === 'free' && (
+                    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-8 text-center backdrop-blur-xl bg-white/30 dark:bg-slate-900/30 rounded-[2.5rem] border border-white/20 shadow-2xl">
+                      <div className="w-20 h-20 bg-accent text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-accent/20 mb-8 animate-bounce-slow">
+                        <Lock size={36} />
+                      </div>
+                      <h3 className="text-2xl font-800 text-text mb-3">Premium Analytics</h3>
+                      <p className="text-sm text-muted mb-10 max-w-[280px] leading-relaxed">
+                        Unlock deep financial insights, historical flow reports, and spending patterns with our Premium subscription.
+                      </p>
+                      <button 
+                        className="btn btn-primary px-10 h-14 rounded-2xl shadow-xl shadow-accent/20 font-bold hover:scale-105 active:scale-95 transition-all"
+                        onClick={() => setProfileTab('subscription')}
+                      >
+                        Upgrade Now
+                      </button>
+                    </div>
+                  )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {months.filter(m => m.startsWith(filterYear)).map((m, idx) => {
-                      const recs = transactions.filter(r => r.Date.startsWith(m));
-                      const exp = recs.filter(r => r.Category === 'Expenses').reduce((s, r) => s + r.Amount, 0);
-                      const inc = recs.filter(r => r.Category === 'Income').reduce((s, r) => s + r.Amount, 0);
-                      return (
-                        <div key={`${m}-${idx}`} className="p-5 rounded-3xl border border-border bg-surface hover:border-indigo-500/30 transition-all cursor-pointer" onClick={() => { setFilterMonth(m); setActivePage('transactions'); }}>
-                          <div className="flex justify-between items-center mb-4">
-                            <div className="font-bold text-sm">
-                              {(() => {
-                                const dt = parseISO(m + '-01');
-                                return isValid(dt) ? format(dt, 'MMM yyyy') : m;
-                              })()}
+                  <div className={cn("transition-all duration-500", userPlan === 'free' && "blur-md pointer-events-none opacity-40")}>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="text-sm text-muted font-medium">Historical flow analytics</div>
+                      <select className="filter-select w-24 h-9" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                        {Array.from(new Set([...months.map(m => m.split('-')[0]), new Date().getFullYear().toString()])).sort((a,b) => b.localeCompare(a)).map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {months.filter(m => m.startsWith(filterYear)).map((m, idx) => {
+                        const recs = transactions.filter(r => r.Date.startsWith(m));
+                        const exp = recs.filter(r => r.Category === 'Expenses').reduce((s, r) => s + r.Amount, 0);
+                        const inc = recs.filter(r => r.Category === 'Income').reduce((s, r) => s + r.Amount, 0);
+                        return (
+                          <div key={`${m}-${idx}`} className="p-5 rounded-3xl border border-border bg-surface hover:border-indigo-500/30 transition-all cursor-pointer" onClick={() => { setFilterMonth(m); setActivePage('transactions'); }}>
+                            <div className="flex justify-between items-center mb-4">
+                              <div className="font-bold text-sm">
+                                {(() => {
+                                  const dt = parseISO(m + '-01');
+                                  return isValid(dt) ? format(dt, 'MMM yyyy') : m;
+                                })()}
+                              </div>
                             </div>
-                            {userPlan === 'free' && <Lock size={12} className="text-muted" />}
-                          </div>
-                          
-                          <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, (exp / (inc || 1) * 100))}%` }} />
-                          </div>
+                            
+                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-4 overflow-hidden">
+                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.min(100, (exp / (inc || 1) * 100))}%` }} />
+                            </div>
 
-                          <div className="flex justify-between">
-                            <div className="text-[10px]"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Exp</span><span className="text-accent font-mono font-bold">{fmt(exp)}</span></div>
-                            <div className="text-[10px] text-right"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Inc</span><span className="text-accent2 font-mono font-bold">{fmt(inc)}</span></div>
+                            <div className="flex justify-between">
+                              <div className="text-[10px]"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Exp</span><span className="text-accent font-mono font-bold">{fmt(exp)}</span></div>
+                              <div className="text-[10px] text-right"><span className="text-muted block uppercase font-bold tracking-wider mb-0.5">Inc</span><span className="text-accent2 font-mono font-bold">{fmt(inc)}</span></div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -2240,6 +2371,115 @@ export default function App() {
                       </div>
                       <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                       <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {profileTab === 'security' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Shield size={20} /></div>
+                    <h2 className="profile-page-title">Password & <span>Security</span></h2>
+                  </div>
+
+                  <div className="settings-scroll no-scrollbar" style={{ padding: 0 }}>
+                    <div className="settings-profile-card" style={{ marginBottom: 24, padding: '32px 16px' }}>
+                      <div className="settings-avatar-wrap" style={{ background: 'rgba(16, 185, 129, 0.1)', width: 80, height: 80, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                        <ShieldCheck size={40} className="text-emerald-500" />
+                      </div>
+                      <div className="settings-profile-name">Account Secured</div>
+                      <div className="settings-profile-email">Your security settings are up to date</div>
+                    </div>
+
+                    <div className="settings-group">
+                      <div className="settings-group-title">Login & Recovery</div>
+                      <div className="settings-card">
+                        <div className="settings-row" onClick={() => {}}>
+                          <div className="settings-row-icon">
+                            <Key size={18} />
+                          </div>
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Change Password</div>
+                            <div className="settings-row-sub">Update your account password</div>
+                          </div>
+                          <ChevronRight size={18} className="settings-row-chevron" />
+                        </div>
+                        <div className="settings-row" onClick={() => {}}>
+                          <div className="settings-row-icon">
+                            <Smartphone size={18} />
+                          </div>
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Two-Factor Auth</div>
+                            <div className="settings-row-sub">Add extra layer of security</div>
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full ml-2">Off</div>
+                          <ChevronRight size={18} className="settings-row-chevron" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="settings-group">
+                      <div className="settings-group-title">Active Sessions</div>
+                      <div className="settings-card">
+                        <div className="settings-row">
+                          <div className="settings-row-icon">
+                            <Monitor size={18} />
+                          </div>
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Chrome on Windows</div>
+                            <div className="settings-row-sub">Current Session • United States</div>
+                          </div>
+                          <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider bg-emerald-500/10 px-3 py-1 rounded-full ml-2">Active</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {profileTab === 'notifications' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="profile-page-header">
+                    <div className="profile-section-icon"><Bell size={20} /></div>
+                    <h2 className="profile-page-title">Manage <span>Notifications</span></h2>
+                  </div>
+
+                  <div className="settings-scroll no-scrollbar" style={{ padding: 0 }}>
+                    <div className="settings-group">
+                      <div className="settings-group-title">Alert Preferences</div>
+                      <div className="settings-card">
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Transaction Alerts</div>
+                            <div className="settings-row-sub">Instant notification for new records</div>
+                          </div>
+                          <label className="switch">
+                            <input type="checkbox" defaultChecked />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Bill Reminders</div>
+                            <div className="settings-row-sub">Notify 2 days before due dates</div>
+                          </div>
+                          <label className="switch">
+                            <input type="checkbox" defaultChecked />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+                        <div className="settings-row">
+                          <div className="settings-row-content">
+                            <div className="settings-row-label">Weekly Reports</div>
+                            <div className="settings-row-sub">Summary of your weekly activity</div>
+                          </div>
+                          <label className="switch">
+                            <input type="checkbox" />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2641,15 +2881,17 @@ const donutOptions = {
 };
 function SettingsRow({ icon, label, sub, onClick }: { icon: ReactNode; label: string; sub: string; onClick: () => void }) {
   return (
-    <button className="settings-row" onClick={onClick}>
-      <div className="settings-row-icon">
+    <button className="settings-row group" onClick={onClick}>
+      <div className="settings-row-icon-wrap">
         {icon}
       </div>
       <div className="settings-row-content">
         <div className="settings-row-label">{label}</div>
         <div className="settings-row-sub">{sub}</div>
       </div>
-      <ChevronRight size={18} className="settings-row-chevron" />
+      <div className="p-2 rounded-lg bg-surface/50 group-hover:bg-accent/10 transition-colors">
+        <ChevronRight size={18} className="settings-row-chevron opacity-40 group-hover:opacity-100 group-hover:text-accent" />
+      </div>
     </button>
   );
 }

@@ -1,0 +1,353 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Monthly Analysis - Expense Log Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#d9dadb",
+                    "secondary-fixed": "#e2e2e2",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#cac3d8",
+                    "on-secondary-fixed-variant": "#474747",
+                    "surface-container-highest": "#e1e3e4",
+                    "primary-fixed-dim": "#cdbdff",
+                    "on-primary-fixed-variant": "#4e00d1",
+                    "outline": "#7a7487",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed": "#1b1b1b",
+                    "on-background": "#191c1d",
+                    "surface-container-high": "#e7e8e9",
+                    "on-primary-fixed": "#1f005f",
+                    "primary-fixed": "#e7deff",
+                    "primary": "#622ce5",
+                    "surface-tint": "#6733ea",
+                    "tertiary-fixed": "#ffdbc7",
+                    "on-tertiary-container": "#fff6f2",
+                    "surface": "#f8f9fa",
+                    "on-tertiary-fixed-variant": "#733600",
+                    "primary-container": "#7b4dff",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#ffb687",
+                    "secondary-fixed-dim": "#c6c6c6",
+                    "on-secondary-container": "#646464",
+                    "inverse-surface": "#2e3132",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-container": "#fcf6ff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#311300",
+                    "inverse-primary": "#cdbdff",
+                    "on-surface": "#191c1d",
+                    "surface-variant": "#e1e3e4",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary": "#ffffff",
+                    "tertiary": "#8f4400",
+                    "on-surface-variant": "#494456",
+                    "background": "#f8f9fa",
+                    "secondary-container": "#e2e2e2",
+                    "secondary": "#5e5e5e",
+                    "inverse-on-surface": "#f0f1f2",
+                    "tertiary-container": "#b45800",
+                    "surface-container-low": "#f3f4f5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "viewport-height": "912px",
+                    "unit": "4px",
+                    "grid-gutter": "12px",
+                    "stack-gap-md": "16px",
+                    "container-padding": "20px",
+                    "stack-gap-sm": "8px",
+                    "viewport-width": "412px"
+            },
+            "fontFamily": {
+                    "data-tabular": ["JetBrains Mono"],
+                    "body-md": ["Hanken Grotesk"],
+                    "display-lg": ["Hanken Grotesk"],
+                    "headline-lg-mobile": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "data-tabular": ["14px", {"lineHeight": "20px", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Hanken Grotesk', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+        .glass-stroke {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .chart-gradient {
+            background: linear-gradient(to bottom, rgba(123, 77, 255, 0.15), rgba(123, 77, 255, 0));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24">
+<!-- Top AppBar -->
+<header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md flex justify-between items-center w-full px-5 h-16">
+<div class="flex items-center gap-3">
+
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Monthly Analysis</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface" data-icon="search">search</span>
+<span class="material-symbols-outlined text-on-surface" data-icon="filter_list">filter_list</span>
+</div>
+</header>
+<main class="px-5 space-y-4 mt-4">
+<!-- 1. Gauge Chart (Budget Pacing) -->
+<section class="glass-card rounded-xl p-5">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Budget Pacing</h2>
+<p class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface mt-1">75% Consumed</p>
+</div>
+<div class="px-3 py-1 rounded-full bg-blue-100"><span class="font-label-sm text-label-sm text-blue-600">On Track</span></div>
+</div>
+<div class="relative w-48 h-48 mx-auto flex items-center justify-center">
+<!-- Simple SVG Gauge Simulation -->
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+<circle class="text-secondary-fixed" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-blue-600" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="62.8" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-data-tabular text-2xl font-bold" style="color: rgb(98, 44, 229);">$4,250</span>
+<span class="font-label-sm text-label-sm text-secondary">of $6,000</span>
+</div>
+</div>
+<div class="mt-6 flex justify-between glass-stroke pb-3">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">Monthly Limit</span>
+<span class="font-data-tabular text-body-md text-blue-600">$150.00</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-secondary">Remaining</span>
+<span class="font-data-tabular text-body-md text-blue-600">$1,750.00</span>
+</div>
+</div>
+</section>
+<!-- 2. Area Chart (Cash Flow & Savings Analysis) -->
+<section class="glass-card rounded-xl p-5">
+<h2 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-4">Cash Flow &amp; Savings</h2>
+<div class="flex gap-4 mb-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-blue-600"></div>
+<span class="font-label-sm text-label-sm text-on-surface">Income</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<span class="font-label-sm text-label-sm text-on-surface">Savings</span>
+</div>
+</div>
+<div class="h-40 w-full relative">
+<!-- Abstract Area Chart Shape -->
+<div class="absolute inset-0 chart-gradient rounded-lg overflow-hidden" style="background: linear-gradient(to bottom, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0));">
+<svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 100">
+<path d="M0,80 Q50,40 100,60 T200,30 T300,50 T400,20 L400,100 L0,100 Z" fill="rgba(37, 99, 235, 0.1)"></path>
+<path d="M0,80 Q50,40 100,60 T200,30 T300,50 T400,20" fill="none" stroke="#2563EB" stroke-width="2"></path>
+</svg>
+</div>
+<div class="absolute bottom-0 w-full flex justify-between font-label-sm text-[10px] text-secondary pt-2">
+<span class="">WK1</span><span class="">WK2</span><span class="">WK3</span><span class="">WK4</span>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="p-3 bg-surface-container rounded-lg">
+<p class="font-label-sm text-label-sm text-secondary">Total Savings</p>
+<p class="font-data-tabular text-headline-lg-mobile text-blue-600">$1,840.50</p>
+</div>
+<div class="p-3 bg-surface-container rounded-lg">
+<p class="font-label-sm text-label-sm text-secondary">Savings Rate</p>
+<p class="font-data-tabular text-headline-lg-mobile text-on-surface">22.4%</p>
+</div>
+</div>
+</section>
+<!-- 3. Line Chart (Payment Trends) -->
+<section class="glass-card rounded-xl p-5">
+<h2 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-4">Payment Trends (6mo)</h2>
+<div class="h-48 w-full border-b border-l border-outline-variant relative flex items-end">
+<svg class="w-full h-full" viewBox="0 0 400 150">
+<!-- Grid Lines -->
+<line stroke="#f0f0f0" x1="0" x2="400" y1="50" y2="50"></line>
+<line stroke="#f0f0f0" x1="0" x2="400" y1="100" y2="100"></line>
+<!-- Data Line -->
+<path d="M0,130 L80,110 L160,120 L240,70 L320,90 L400,40" fill="none" stroke="#2563EB" stroke-width="1.5"></path>
+<!-- Dots -->
+<circle cx="80" cy="110" fill="#2563EB" r="3"></circle>
+<circle cx="160" cy="120" fill="#2563EB" r="3"></circle>
+<circle cx="240" cy="70" fill="#2563EB" r="3"></circle>
+<circle cx="320" cy="90" fill="#2563EB" r="3"></circle>
+<circle cx="400" cy="40" fill="#2563EB" r="4"></circle>
+</svg>
+<!-- Labels -->
+<div class="absolute -bottom-6 w-full flex justify-between font-label-sm text-[10px] text-secondary">
+<span class="">JAN</span><span class="">FEB</span><span class="">MAR</span><span class="">APR</span><span class="">MAY</span><span class="">JUN</span>
+</div>
+</div>
+<div class="mt-10 flex items-center gap-2 text-blue-600">
+<span class="material-symbols-outlined text-[18px]" data-icon="trending_up">trending_up</span>
+<p class="font-body-md text-label-sm">Spending increased 12% since April</p>
+</div>
+</section>
+<!-- 4. Pie Chart (Expense Distribution) -->
+<section class="glass-card rounded-xl p-5">
+<h2 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-6">Expense Distribution</h2>
+<div class="flex items-center justify-between gap-6">
+<div class="relative w-32 h-32">
+<!-- Simple CSS/SVG Pie Simulation -->
+<svg class="w-full h-full rounded-full transform -rotate-90" viewBox="0 0 32 32"><circle cx="16" cy="16" fill="none" r="16" stroke="#10b981" stroke-dasharray="100 100" stroke-width="32"></circle><circle cx="16" cy="16" fill="none" r="16" stroke="#2563eb" stroke-dasharray="60 100" stroke-width="32"></circle><circle cx="16" cy="16" fill="none" r="16" stroke="#f59e0b" stroke-dasharray="35 100" stroke-width="32"></circle><circle cx="16" cy="16" fill="none" r="16" stroke="#94a3b8" stroke-dasharray="15 100" stroke-width="32"></circle></svg>
+<div class="absolute inset-0 bg-white/20 rounded-full blur-[2px]"></div>
+</div>
+<div class="flex-1 space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></div>
+<span class="font-body-md text-label-sm">Housing</span>
+</div>
+<span class="font-data-tabular text-label-sm">45%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-sm bg-blue-600"></div>
+<span class="font-body-md text-label-sm">Food</span>
+</div>
+<span class="font-data-tabular text-label-sm">25%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-sm bg-amber-500"></div>
+<span class="font-body-md text-label-sm">Transport</span>
+</div>
+<span class="font-data-tabular text-label-sm">20%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-sm bg-slate-400"></div>
+<span class="font-body-md text-label-sm">Others</span>
+</div>
+<span class="font-data-tabular text-label-sm">10%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. Bar Chart (Category Comparison) -->
+<section class="glass-card rounded-xl p-5">
+<h2 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-6">Top 5 Spend Categories</h2>
+<div class="space-y-5">
+<div>
+<div class="flex justify-between mb-1.5">
+<span class="font-body-md text-label-sm font-semibold">Rent &amp; Utilities</span>
+<span class="font-data-tabular text-label-sm">$2,100</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-blue-600 w-[90%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1.5">
+<span class="font-body-md text-label-sm font-semibold">Dining Out</span>
+<span class="font-data-tabular text-label-sm">$850</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[65%] rounded-full opacity-85"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1.5">
+<span class="font-body-md text-label-sm font-semibold">Groceries</span>
+<span class="font-data-tabular text-label-sm">$520</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-amber-500 w-[40%] rounded-full opacity-70"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1.5">
+<span class="font-body-md text-label-sm font-semibold">Subscriptions</span>
+<span class="font-data-tabular text-label-sm">$180</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-blue-400 w-[20%] rounded-full opacity-50"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-1.5">
+<span class="font-body-md text-label-sm font-semibold">Transit</span>
+<span class="font-data-tabular text-label-sm">$120</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-emerald-300 w-[12%] rounded-full opacity-30"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 h-20 bg-surface-container-lowest border-t border-outline-variant"><!-- Home -->
+<div class="flex flex-col items-center justify-center text-secondary">
+  <span class="material-symbols-outlined" data-icon="home">home</span>
+  <span class="font-label-sm text-[10px]">Home</span>
+</div>
+<!-- Transactions -->
+<div class="flex flex-col items-center justify-center text-secondary">
+  <span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+  <span class="font-label-sm text-[10px]">Transactions</span>
+</div>
+<!-- Outstanding -->
+<div class="flex flex-col items-center justify-center text-secondary">
+  <span class="material-symbols-outlined" data-icon="pending_actions">pending_actions</span>
+  <span class="font-label-sm text-[10px]">Outstanding</span>
+</div>
+<!-- Profile (Active) -->
+<div class="flex flex-col items-center justify-center text-primary-container font-bold scale-90 transition-transform duration-150">
+  <span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+  <span class="font-label-sm text-[10px]">Profile</span>
+</div></nav>
+
+
+
+
+
+
+
+
+</body></html>

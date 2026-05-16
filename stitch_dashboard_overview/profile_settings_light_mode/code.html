@@ -1,0 +1,203 @@
+<!DOCTYPE html><html class="light" lang="en" style="width: 390px; height: 1392px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"],
+                        "sans": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light font-sans text-gray-900">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-24">
+<!-- Minimal Header for Focused View -->
+<header class="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold">Profile Settings</h1>
+<button class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+</button>
+</header>
+<!-- Profile Hero Section -->
+<section class="px-6 py-8 flex flex-col items-center">
+<div class="relative mb-4">
+<div class="size-28 rounded-full overflow-hidden border-4 border-white shadow-lg bg-cover bg-center" data-alt="A professional headshot of a sophisticated young executive with a friendly expression. The portrait is captured in a bright, airy studio with high-key lighting that emphasizes a clean, premium white aesthetic. The background is a soft, out-of-focus modern office space with subtle orange accents that align with the brand's primary color palette. The overall mood is confident and welcoming, presented in a minimalist digital photography style." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDTQ0Yw-kIqnvbj6Ej1oUKnNB7lZdBexVg_EE5o5I8tVYhsaVJ1yXx84bSOvfqUp7RATRIE9IGWXhMncADE0cfWX1BBMLYgJrGlJki1wBQZ0f_Vnv5di3S_rKDyCXaCCZMIs0tiH2yErEbzm7mD1e1h-UenvgLe6l_bI5IC78M4l82j2wIDzkHLPD-7y42EZ-0uCVN4ofpgufcLVP8R2pTsiW63hu-P_Hu_K8TnCGJQ8dbcLACPeCxOkSRvKIW4oUwwe5aWOfhzTL-W&quot;);">
+</div>
+</div>
+<h2 class="text-2xl font-bold text-gray-900">Alex Harrison</h2>
+<p class="text-gray-500 font-medium">alex.harrison@premium.com</p>
+<div class="mt-4 px-4 py-1.5 bg-primary/10 text-primary text-sm font-bold rounded-full">
+                PREMIUM MEMBER
+            </div>
+</section>
+<!-- Profile Sections (Glassmorphism Stack) -->
+<div class="px-4 space-y-4">
+<!-- Account Group -->
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-4 border-b border-gray-100">
+<p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Account Settings</p>
+</div>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">person</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">My Account</p>
+<p class="text-xs text-gray-500">Personal information and preferences</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors border-t border-gray-100" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Monthly Analytics</p>
+<p class="text-xs text-gray-500">View your activity reports</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors border-t border-gray-100" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">My Wallet</p>
+<p class="text-xs text-gray-500">Payment methods and balance</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+</div>
+<!-- Security Group -->
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-4 border-b border-gray-100">
+<p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Security &amp; Notifications</p>
+</div>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Notifications</p>
+<p class="text-xs text-gray-500">Alerts, updates, and messages</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors border-t border-gray-100" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">lock</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Password and Security</p>
+<p class="text-xs text-gray-500">2FA, password, and active sessions</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+</div>
+<!-- Support Group -->
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-4 border-b border-gray-100">
+<p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Plan &amp; Support</p>
+</div>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">card_membership</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Subscription</p>
+<p class="text-xs text-gray-500">Manage your premium plan</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+<a class="flex items-center gap-4 p-4 hover:bg-white/50 transition-colors border-t border-gray-100" href="#">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">help</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Help &amp; About</p>
+<p class="text-xs text-gray-500">FAQ, support, and legal</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</a>
+</div>
+<!-- Actions Group -->
+<div class="glass-card rounded-xl overflow-hidden mb-8">
+<button class="w-full flex items-center gap-4 p-4 hover:bg-white/50 transition-colors text-left">
+<div class="size-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold">Add Account</p>
+</div>
+<span class="material-symbols-outlined text-gray-400">add</span>
+</button>
+<button class="w-full flex items-center gap-4 p-4 hover:bg-red-50/50 transition-colors border-t border-gray-100 text-left">
+<div class="size-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined">logout</span>
+</div>
+<div class="flex-1">
+<p class="text-base font-semibold text-red-500">Sign Out</p>
+</div>
+</button>
+</div>
+</div>
+<div class="mt-auto text-center py-6">
+<p class="text-xs text-gray-400">Version 2.4.1 (2024)</p>
+</div>
+</div>
+<!-- Bottom Navigation Bar (Shared Component Style) -->
+<nav class="bg-white/80 backdrop-blur-lg border-t border-gray-100 px-6 pt-3 pb-6 flex justify-between items-center fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50"><a class="flex flex-col items-center gap-1 transition-all text-gray-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 transition-all text-gray-400" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Transactions</span>
+</a>
+<a class="flex flex-col items-center gap-1 transition-all text-gray-400" href="#">
+<span class="material-symbols-outlined">pending_actions</span>
+<span class="text-[10px] font-medium uppercase tracking-wider">Outstanding</span>
+</a>
+<a class="flex flex-col items-center gap-1 transition-all text-[#7B4DFF]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">person</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+</a></nav>
+<div aria-hidden="true" data-snapdom-sandbox="true" id="snapdom-sandbox" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div>
+
+
+</body></html>
