@@ -24,7 +24,9 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 export const setAnalyticsUserPlan = (plan) => {
   if (analytics) {
     const isLocal = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      (window.location.hostname === 'localhost' || 
+       window.location.hostname === '127.0.0.1' || 
+       window.location.hostname === 'expenselog.local');
     setUserProperties(analytics, { plan_type: plan, debug_mode: isLocal });
   }
 };
@@ -32,7 +34,9 @@ export const setAnalyticsUserPlan = (plan) => {
 export const logAnalyticsEvent = (name, params) => {
   if (analytics) {
     const isLocal = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      (window.location.hostname === 'localhost' || 
+       window.location.hostname === '127.0.0.1' || 
+       window.location.hostname === 'expenselog.local');
     logEvent(analytics, name, { ...params, debug_mode: isLocal });
   }
 };

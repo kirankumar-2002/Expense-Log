@@ -37,7 +37,11 @@ class MainActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (isUnlocked) {
+                        // For production, use the Netlify URL
                         WebViewScreen(url = "https://expenselogpro.netlify.app/")
+                        
+                        // For local development, use your machine's IP (e.g. http://192.168.1.6:3000)
+                        // WebViewScreen(url = "http://192.168.1.6:3000") 
                     } else {
                         // Splash / lock screen
                         Box(
