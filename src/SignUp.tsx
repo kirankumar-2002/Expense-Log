@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { auth, db } from './firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { Mail, Lock, User, AlertCircle, Command, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, AlertCircle, Command, Eye, EyeOff, Wallet, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
@@ -51,7 +51,9 @@ const SignUp = ({ onToggle, onSuccess, isModal = false }) => {
         className="auth-card"
         style={isModal ? { background: 'transparent', backdropFilter: 'none', border: 'none', boxShadow: 'none' } : {}}
       >
-        <img src="/logo.png" alt="Expense Log Pro" className="auth-logo" />
+        <div className="flex justify-center mb-6 drop-shadow-sm">
+          <img src="/logo.png" alt="Logo" className="w-[84px] h-auto object-contain" />
+        </div>
 
         <h1 className="auth-title">Join Us</h1>
         <p className="auth-subtitle">

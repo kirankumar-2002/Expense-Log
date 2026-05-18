@@ -205,6 +205,7 @@ function mapRecordToRow(record: any, _table: string) {
     desc: record.Desc || record.desc || '',
     notes: record.Notes || record.notes || '',
     amount: rawAmount,
+    user_id: currentUserId,
   };
 
   return mapped;
@@ -242,6 +243,7 @@ function mapAccountToRow(record: any) {
     standard_balance: record.standard_balance ? parseFloat(String(record.standard_balance)) : 0,
     month: record.Month || record.month || '',
     last_updated_at: record.lastUpdated || record.last_updated || new Date().toISOString(),
+    user_id: currentUserId,
   };
 }
 

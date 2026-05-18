@@ -1,6 +1,6 @@
 {
-  "name": "Expense Log",
-  "description": "A refined personal finance dashboard for tracking income, expenses, and outstanding bills, synced with Google Sheets.",
+  "name": "Expense Log Pro",
+  "description": "A premium personal finance tracker with advanced analytics, interactive charts, and a polished mobile-first interface.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
